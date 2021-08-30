@@ -26,9 +26,6 @@ private:
 
     uint8_t opcode{};
     uint8_t opvalue{};
-    uint8_t resultAddress{};
-    uint8_t opcycles{};
-    uint8_t opcylesLeft{};
 
     enum AddressingMode {
         Implicit = 0,
