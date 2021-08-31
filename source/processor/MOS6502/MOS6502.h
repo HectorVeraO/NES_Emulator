@@ -25,7 +25,8 @@ private:
     uint8_t Y;    // Index Y
 
     uint8_t opcode{};
-    uint8_t opvalue{};
+    uint8_t opvalue{};      // Value obtained through the addressing mode
+    uint16_t opaddress{};   // Address obtained though the addressing mode
 
     enum AddressingMode {
         Implicit = 0,
@@ -43,11 +44,26 @@ private:
         IndirectIndexed = 12
     };
 
+    enum Flag {
+        Carry = 0,
+        Zero = 1,
+        InterruptDisable = 2,
+        DecimalMode = 3,
+        BreakCommand = 4,
+        B = 5,
+        Overflow = 6,
+        Negative = 7
+    };
+
     AddressingMode addressingMode;
 
     uint8_t readMemory(uint16_t address) const;
 
     void writeMemory(uint16_t address, uint8_t value) const;
+
+    void setFlag(uint8_t offset, bool turnOn) {
+        P |= turnOn ? 1 << offset : ~(1 << offset);
+    }
 
     // Addressing modes
     void amIMP();

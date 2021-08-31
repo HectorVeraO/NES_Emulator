@@ -83,40 +83,43 @@ void MOS6502::opUnimplementedInstruction() {
 
 void MOS6502::amIMP() {
     addressingMode = Implicit;
+    opaddress = 0;
     opvalue = 0;
 }
 
 void MOS6502::amACC() {
     addressingMode = Accumulator;
     opvalue = A;
+    opaddress = 0;
 }
 
 void MOS6502::amIMM() {
     addressingMode = Immediate;
+    opaddress = PC;
     opvalue = readMemory(PC++);
 }
 
 void MOS6502::amZP() {
     addressingMode = ZeroPage;
     uint8_t lowByte = readMemory(PC++);
-    uint16_t address = 0x0000 | lowByte;
-    opvalue = readMemory(address);
+    opaddress = 0x0000 | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amABS() {
     addressingMode = Absolute;
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++) << 8;
-    uint16_t address = highByte | lowByte;
-    opvalue = readMemory(address);
+    opaddress = highByte | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amREL() {
     addressingMode = Relative;
     uint8_t offset = readMemory(PC);
     PC += 2;
-    uint16_t address = PC + offset;
-    opvalue = readMemory(address);
+    opaddress = PC + offset;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amIND() {
@@ -125,15 +128,15 @@ void MOS6502::amIND() {
     uint16_t highByte = readMemory(PC++) << 8;
     lowByte = readMemory(highByte | lowByte);
     highByte = (lowByte + 1) << 8;
-    uint16_t address = highByte | lowByte;
-    opvalue = readMemory(address);
+    opaddress = highByte | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amZPX() {
     addressingMode = ZeroPageX;
     uint8_t lowByte = readMemory(PC++) + X;
-    uint16_t address = 0x0000 | lowByte;
-    opvalue = readMemory(address);
+    opaddress = 0x0000 | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amZPY() {
@@ -147,24 +150,24 @@ void MOS6502::amABSX() {
     addressingMode = AbsoluteX;
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++) << 8;
-    uint16_t address = (highByte | lowByte) + X;
-    opvalue = readMemory(address);
+    opaddress = (highByte | lowByte) + X;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amABSY() {
     addressingMode = AbsoluteY;
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++);
-    uint16_t address = (highByte | lowByte) + Y;
-    opvalue = readMemory(address);
+    opaddress = (highByte | lowByte) + Y;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amINDX() {
     addressingMode = IndexedIndirect;
     uint8_t lowByte = readMemory(PC++) + X;
     uint8_t highByte = lowByte + 1;
-    uint16_t address = (highByte << 8) | lowByte;
-    opvalue = readMemory(address);
+    opaddress = (highByte << 8) | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 void MOS6502::amINDY() {
@@ -174,8 +177,8 @@ void MOS6502::amINDY() {
     lowByte += Y;
     uint8_t carry = lowByte < Y ? 1 : 0;
     uint8_t highByte = readMemory(PC++) + carry;
-    uint16_t address = (highByte << 8) | lowByte;
-    opvalue = readMemory(address);
+    opaddress = (highByte << 8) | lowByte;
+    opvalue = readMemory(opaddress);
 }
 
 uint8_t MOS6502::opADC() {
@@ -295,15 +298,24 @@ uint8_t MOS6502::opJSR() {
 }
 
 uint8_t MOS6502::opLDA() {
-
+    A = opvalue;
+    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Zero, A == 0);
+    return A;
 }
 
 uint8_t MOS6502::opLDX() {
-
+    X = opvalue;
+    setFlag(Negative, (X & 0x80) >> 7);
+    setFlag(Zero, X == 0);
+    return X;
 }
 
 uint8_t MOS6502::opLDY() {
-
+    Y = opvalue;
+    setFlag(Negative, (Y & 0x80) >> 7);
+    setFlag(Zero, Y == 0);
+    return Y;
 }
 
 uint8_t MOS6502::opLSR() {
@@ -367,15 +379,18 @@ uint8_t MOS6502::opSEI() {
 }
 
 uint8_t MOS6502::opSTA() {
-
+    writeMemory(opaddress, A);
+    return A;
 }
 
 uint8_t MOS6502::opSTX() {
-
+    writeMemory(opaddress, X);
+    return X;
 }
 
 uint8_t MOS6502::opSTY() {
-
+    writeMemory(opaddress, Y);
+    return Y;
 }
 
 uint8_t MOS6502::opTAX() {
