@@ -27,6 +27,23 @@ void MOS6502::writeMemory(uint16_t address, uint8_t value) const {
     bus->writeRAM(address, value);
 }
 
+uint8_t MOS6502::pullStack(uint8_t lowByte) {
+    uint16_t address = 0x0100 | lowByte;
+    uint8_t value = readMemory(address);
+    S++;
+    return value;
+}
+
+void MOS6502::pushStack(uint8_t lowByte, uint8_t value) {
+    uint16_t address = 0x0100 | lowByte;
+    writeMemory(address, value);
+    S--;
+}
+
+void MOS6502::setFlag(uint8_t offset, bool turnOn) {
+    P |= turnOn ? 1 << offset : ~(1 << offset);
+}
+
 void MOS6502::execute() {
     opcode = readMemory(PC);
     PC++;
@@ -331,19 +348,25 @@ uint8_t MOS6502::opORA() {
 }
 
 uint8_t MOS6502::opPHA() {
-
+    pushStack(S, A);
+    return A;
 }
 
 uint8_t MOS6502::opPHP() {
-
+    pushStack(S, P);
+    return P;
 }
 
 uint8_t MOS6502::opPLA() {
-
+    A = pullStack(S);
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opPLP() {
-
+    P = pullStack(S);
+    return P;
 }
 
 uint8_t MOS6502::opROL() {
@@ -408,7 +431,10 @@ uint8_t MOS6502::opTAY() {
 }
 
 uint8_t MOS6502::opTSX() {
-
+    X = S;
+    setFlag(Zero, X == 0);
+    setFlag(Negative, X & 0x80);
+    return X;
 }
 
 uint8_t MOS6502::opTXA() {
@@ -419,7 +445,8 @@ uint8_t MOS6502::opTXA() {
 }
 
 uint8_t MOS6502::opTXS() {
-
+    S = X;
+    return S;
 }
 
 uint8_t MOS6502::opTYA() {
