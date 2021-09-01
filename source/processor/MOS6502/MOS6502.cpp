@@ -394,11 +394,17 @@ uint8_t MOS6502::opSTY() {
 }
 
 uint8_t MOS6502::opTAX() {
-
+    X = A;
+    setFlag(Zero, X == 0);
+    setFlag(Negative, X & 0x80);
+    return X;
 }
 
 uint8_t MOS6502::opTAY() {
-
+    Y = A;
+    setFlag(Zero, Y == 0);
+    setFlag(Negative, Y & 0x80);
+    return Y;
 }
 
 uint8_t MOS6502::opTSX() {
@@ -406,7 +412,10 @@ uint8_t MOS6502::opTSX() {
 }
 
 uint8_t MOS6502::opTXA() {
-
+    A = X;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opTXS() {
@@ -414,5 +423,8 @@ uint8_t MOS6502::opTXS() {
 }
 
 uint8_t MOS6502::opTYA() {
-
+    A = Y;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
