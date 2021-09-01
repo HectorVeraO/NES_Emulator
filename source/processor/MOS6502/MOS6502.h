@@ -12,10 +12,11 @@ public:
     ~MOS6502();
 
     void execute();
-    void connectBus(Bus* newBus);
+
+    void connectBus(Bus *newBus);
 
 private:
-    Bus* bus;
+    Bus *bus;
 
     uint16_t PC;  // Program counter
     uint8_t S;    // Stack pointer
@@ -61,9 +62,11 @@ private:
 
     void writeMemory(uint16_t address, uint8_t value) const;
 
-    void setFlag(uint8_t offset, bool turnOn) {
-        P |= turnOn ? 1 << offset : ~(1 << offset);
-    }
+    uint8_t pullStack(uint8_t lowByte);
+
+    void pushStack(uint8_t lowByte, uint8_t value);
+
+    void setFlag(uint8_t offset, bool turnOn);
 
     // Addressing modes
     void amIMP();
