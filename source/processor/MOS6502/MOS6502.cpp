@@ -203,7 +203,10 @@ uint8_t MOS6502::opADC() {
 }
 
 uint8_t MOS6502::opAND() {
-
+    A &= opvalue;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opASL() {
@@ -223,7 +226,11 @@ uint8_t MOS6502::opBEQ() {
 }
 
 uint8_t MOS6502::opBIT() {
-
+    uint8_t nonAccumulatedResult = A & opvalue;
+    setFlag(Zero, nonAccumulatedResult == 0);
+    setFlag(Overflow, nonAccumulatedResult & 0x40);
+    setFlag(Negative, nonAccumulatedResult & 0x80);
+    return nonAccumulatedResult;
 }
 
 uint8_t MOS6502::opBMI() {
@@ -291,7 +298,10 @@ uint8_t MOS6502::opDEY() {
 }
 
 uint8_t MOS6502::opEOR() {
-
+    A ^= opvalue;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opINC() {
@@ -344,7 +354,10 @@ uint8_t MOS6502::opNOP() {
 }
 
 uint8_t MOS6502::opORA() {
-
+    A |= opvalue;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opPHA() {
