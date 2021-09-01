@@ -199,13 +199,13 @@ void MOS6502::amINDY() {
 }
 
 uint8_t MOS6502::opADC() {
-
+    // TODO Implement arithmetic operations.
 }
 
 uint8_t MOS6502::opAND() {
     A &= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
@@ -228,8 +228,8 @@ uint8_t MOS6502::opBEQ() {
 uint8_t MOS6502::opBIT() {
     uint8_t nonAccumulatedResult = A & opvalue;
     setFlag(Zero, nonAccumulatedResult == 0);
-    setFlag(Overflow, nonAccumulatedResult & 0x40);
-    setFlag(Negative, nonAccumulatedResult & 0x80);
+    setFlag(Overflow, (nonAccumulatedResult & 0x40) >> 6);
+    setFlag(Negative, (nonAccumulatedResult & 0x80) >> 7);
     return nonAccumulatedResult;
 }
 
@@ -300,7 +300,7 @@ uint8_t MOS6502::opDEY() {
 uint8_t MOS6502::opEOR() {
     A ^= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
@@ -356,7 +356,7 @@ uint8_t MOS6502::opNOP() {
 uint8_t MOS6502::opORA() {
     A |= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
@@ -373,7 +373,7 @@ uint8_t MOS6502::opPHP() {
 uint8_t MOS6502::opPLA() {
     A = pullStack(S);
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
@@ -432,28 +432,28 @@ uint8_t MOS6502::opSTY() {
 uint8_t MOS6502::opTAX() {
     X = A;
     setFlag(Zero, X == 0);
-    setFlag(Negative, X & 0x80);
+    setFlag(Negative, (X & 0x80) >> 7);
     return X;
 }
 
 uint8_t MOS6502::opTAY() {
     Y = A;
     setFlag(Zero, Y == 0);
-    setFlag(Negative, Y & 0x80);
+    setFlag(Negative, (Y & 0x80) >> 7);
     return Y;
 }
 
 uint8_t MOS6502::opTSX() {
     X = S;
     setFlag(Zero, X == 0);
-    setFlag(Negative, X & 0x80);
+    setFlag(Negative, (X & 0x80) >> 7);
     return X;
 }
 
 uint8_t MOS6502::opTXA() {
     A = X;
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
@@ -465,6 +465,6 @@ uint8_t MOS6502::opTXS() {
 uint8_t MOS6502::opTYA() {
     A = Y;
     setFlag(Zero, A == 0);
-    setFlag(Negative, A & 0x80);
+    setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
