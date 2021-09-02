@@ -52,7 +52,7 @@ private:
         DecimalMode = 3,
         BreakCommand = 4,
         B = 5,
-        Overflow = 6,
+        Overflow = 6,           // Indicates if there's a two's complement overflow
         Negative = 7
     };
 
@@ -65,6 +65,8 @@ private:
     uint8_t pullStack(uint8_t lowByte);
 
     void pushStack(uint8_t lowByte, uint8_t value);
+
+    uint8_t getFlag(uint8_t offset);
 
     void setFlag(uint8_t offset, bool turnOn);
 

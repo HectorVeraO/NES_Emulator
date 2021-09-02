@@ -40,6 +40,10 @@ void MOS6502::pushStack(uint8_t lowByte, uint8_t value) {
     S--;
 }
 
+uint8_t MOS6502::getFlag(uint8_t offset) {
+    return P & (1 << offset);
+}
+
 void MOS6502::setFlag(uint8_t offset, bool turnOn) {
     P |= turnOn ? 1 << offset : ~(1 << offset);
 }
@@ -198,8 +202,24 @@ void MOS6502::amINDY() {
     opvalue = readMemory(opaddress);
 }
 
+// TODO: Even if it works I don't like it. Make it better. Horrible bit manipulation.
 uint8_t MOS6502::opADC() {
-    // TODO Implement arithmetic operations.
+    uint8_t carry = getFlag(Carry);
+    uint16_t sumWithoutCarry = A + opvalue;
+    uint16_t sum = sumWithoutCarry + carry;
+    uint8_t sumLowByte = sum & 0xFF;
+    setFlag(Carry, A > sumLowByte);
+    setFlag(Zero, A == 0);
+    bool positiveOverflow = ~((A & 0x80) >> 7) && ~((opvalue & 0x80) >> 7) && ((sumWithoutCarry & 0x80) >> 7);      // For two's complement: if the sum of two positive numbers is negative there's been an overflow
+    bool negativeOverflow = ((A & 0x80) >> 7) && ((opvalue & 0x80) >> 7) && ~((sumWithoutCarry & 0x80) >> 7);       // For two's complement: if the subtraction of two negative numbers is positive there's been an overflow
+    if (carry && !positiveOverflow && !negativeOverflow) {
+        positiveOverflow = ~((sumWithoutCarry & 0x80) >> 7) && ((sum & 0x80) >> 7);
+        negativeOverflow = (sumWithoutCarry & 0x80) >> 7 && ~((sum & 0x80) >> 7);
+    }
+    setFlag(Overflow, positiveOverflow || negativeOverflow);
+    setFlag(Negative, (sumLowByte & 0x80) >> 7);
+    A = sumLowByte;
+    return A;
 }
 
 uint8_t MOS6502::opAND() {
@@ -274,15 +294,27 @@ uint8_t MOS6502::opCLV() {
 }
 
 uint8_t MOS6502::opCMP() {
-
+    setFlag(Carry, A >= opvalue);
+    setFlag(Zero, A == opvalue);
+    uint8_t subtraction = A - opvalue;
+    setFlag(Negative, (subtraction & 0x80) >> 7);
+    return subtraction;
 }
 
 uint8_t MOS6502::opCPX() {
-
+    setFlag(Carry, X >= opvalue);
+    setFlag(Zero, X == opvalue);
+    uint8_t subtraction = X - opvalue;
+    setFlag(Negative, (subtraction & 0x80) >> 7);
+    return subtraction;
 }
 
 uint8_t MOS6502::opCPY() {
-
+    setFlag(Carry, Y >= opvalue);
+    setFlag(Zero, Y == opvalue);
+    uint8_t subtraction = Y - opvalue;
+    setFlag(Negative, (subtraction & 0x80) >> 7);
+    return subtraction;
 }
 
 uint8_t MOS6502::opDEC() {
@@ -399,7 +431,22 @@ uint8_t MOS6502::opRTS() {
 }
 
 uint8_t MOS6502::opSBC() {
-
+    uint8_t carry = getFlag(Carry);
+    uint16_t subtractionWithoutCarry = A - opvalue;
+    uint16_t subtraction = subtractionWithoutCarry - carry;
+    uint8_t subtractionLowByte = subtraction & 0x80;
+    setFlag(Carry, A > subtractionLowByte);
+    setFlag(Zero, A == 0);
+    bool pnOverflow = ~((A & 0x80) >> 7) && ((opvalue & 0x80) >> 7) && std::abs((int8_t) A - INT8_MIN) <= std::abs((int8_t) opvalue);
+    bool npOverflow = ((A & 0x80) >> 7) && ~((opvalue & 0x80) >> 7) && std::abs((int8_t) A - INT8_MAX) <= std::abs((int8_t) opvalue);
+    if (carry && !npOverflow && !pnOverflow) {
+        pnOverflow = ~((subtractionWithoutCarry & 0x80) >> 7) && std::abs((int8_t) subtractionWithoutCarry - INT8_MIN) <= std::abs((int8_t) carry);
+        npOverflow = ((subtractionWithoutCarry & 0x80) >> 7) && std::abs((int8_t) subtractionWithoutCarry - INT8_MAX) <= std::abs((int8_t) carry);
+    }
+    setFlag(Overflow, pnOverflow || npOverflow);
+    setFlag(Negative, (subtractionLowByte & 0x80) >> 7);
+    A = subtractionLowByte;
+    return A;
 }
 
 uint8_t MOS6502::opSEC() {
