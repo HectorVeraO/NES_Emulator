@@ -281,8 +281,8 @@ uint8_t MOS6502::opBPL() {
 }
 
 uint8_t MOS6502::opBRK() {
-    pushStack((PC & 0xF0) >> 8);
-    pushStack(PC & 0x0F);
+    pushStack((PC & 0xFF00) >> 8);
+    pushStack(PC & 0x00FF);
     pushStack(P);
     PC = 0xFFFF;
     setFlag(BreakCommand, true);
@@ -402,8 +402,8 @@ uint8_t MOS6502::opJMP() {
 }
 
 uint8_t MOS6502::opJSR() {
-    pushStack(PC & 0xF0);
-    pushStack(PC & 0x0F);
+    pushStack((PC & 0xFF00) >> 8);
+    pushStack(PC & 0x00FF);
     PC = opaddress;
     return 0xFF;
 }
