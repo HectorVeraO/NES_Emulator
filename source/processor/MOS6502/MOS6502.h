@@ -62,9 +62,9 @@ private:
 
     void writeMemory(uint16_t address, uint8_t value) const;
 
-    uint8_t pullStack(uint8_t lowByte);
+    uint8_t pullStack();
 
-    void pushStack(uint8_t lowByte, uint8_t value);
+    void pushStack(uint8_t value);
 
     uint8_t getFlag(uint8_t offset);
 

@@ -27,17 +27,15 @@ void MOS6502::writeMemory(uint16_t address, uint8_t value) const {
     bus->writeRAM(address, value);
 }
 
-uint8_t MOS6502::pullStack(uint8_t lowByte) {
-    uint16_t address = 0x0100 | lowByte;
+uint8_t MOS6502::pullStack() {
+    uint16_t address = 0x0100 | S++;
     uint8_t value = readMemory(address);
-    S++;
     return value;
 }
 
-void MOS6502::pushStack(uint8_t lowByte, uint8_t value) {
-    uint16_t address = 0x0100 | lowByte;
+void MOS6502::pushStack(uint8_t value) {
+    uint16_t address = 0x0100 | S--;
     writeMemory(address, value);
-    S--;
 }
 
 uint8_t MOS6502::getFlag(uint8_t offset) {
@@ -230,7 +228,11 @@ uint8_t MOS6502::opAND() {
 }
 
 uint8_t MOS6502::opASL() {
-
+    setFlag(Carry, opvalue & 0x80);
+    A = opvalue << 1;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opBCC() {
@@ -318,15 +320,25 @@ uint8_t MOS6502::opCPY() {
 }
 
 uint8_t MOS6502::opDEC() {
-
+    uint8_t result = opvalue - 1;
+    setFlag(Zero, result == 0);
+    setFlag(Negative, result & 0x80);
+    writeMemory(opaddress, result);
+    return result;
 }
 
 uint8_t MOS6502::opDEX() {
-
+    X--;
+    setFlag(Zero, X == 0);
+    setFlag(Negative, X & 0x80);
+    return X;
 }
 
 uint8_t MOS6502::opDEY() {
-
+    Y--;
+    setFlag(Zero, Y == 0);
+    setFlag(Negative, Y & 0x80);
+    return Y;
 }
 
 uint8_t MOS6502::opEOR() {
@@ -337,23 +349,37 @@ uint8_t MOS6502::opEOR() {
 }
 
 uint8_t MOS6502::opINC() {
-
+    uint8_t result = opvalue + 1;
+    setFlag(Zero, result == 0);
+    setFlag(Negative, result & 0x80);
+    writeMemory(opaddress, result);
+    return result;
 }
 
 uint8_t MOS6502::opINX() {
-
+    X++;
+    setFlag(Zero, X == 0);
+    setFlag(Negative, X & 0x80);
+    return X;
 }
 
 uint8_t MOS6502::opINY() {
-
+    Y++;
+    setFlag(Zero, Y == 0);
+    setFlag(Negative, Y & 0x80);
+    return Y;
 }
 
 uint8_t MOS6502::opJMP() {
-
+    PC = opaddress;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opJSR() {
-
+    pushStack(PC & 0xF0);
+    pushStack(PC & 0x0F);
+    PC = opaddress;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opLDA() {
@@ -378,7 +404,11 @@ uint8_t MOS6502::opLDY() {
 }
 
 uint8_t MOS6502::opLSR() {
-
+    setFlag(Carry, opvalue & 0x01);
+    A = opvalue >> 1;
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);    // Can this be true?
+    return A;
 }
 
 uint8_t MOS6502::opNOP() {
@@ -393,33 +423,43 @@ uint8_t MOS6502::opORA() {
 }
 
 uint8_t MOS6502::opPHA() {
-    pushStack(S, A);
+    pushStack(A);
     return A;
 }
 
 uint8_t MOS6502::opPHP() {
-    pushStack(S, P);
+    pushStack(P);
     return P;
 }
 
 uint8_t MOS6502::opPLA() {
-    A = pullStack(S);
+    A = pullStack();
     setFlag(Zero, A == 0);
     setFlag(Negative, (A & 0x80) >> 7);
     return A;
 }
 
 uint8_t MOS6502::opPLP() {
-    P = pullStack(S);
+    P = pullStack();
     return P;
 }
 
 uint8_t MOS6502::opROL() {
-
+    bool hasCarry = opvalue & 0x80;
+    A = (opvalue << 1) | getFlag(Carry);
+    setFlag(Carry, hasCarry);
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opROR() {
-
+    bool hasCarry = opvalue & 0x01;
+    A = (opvalue >> 1) | getFlag(Carry);
+    setFlag(Carry, hasCarry);
+    setFlag(Zero, A == 0);
+    setFlag(Negative, A & 0x80);
+    return A;
 }
 
 uint8_t MOS6502::opRTI() {
@@ -427,7 +467,10 @@ uint8_t MOS6502::opRTI() {
 }
 
 uint8_t MOS6502::opRTS() {
-
+    uint8_t PCL = pullStack();
+    uint8_t PCH = pullStack();
+    PC = (PCH << 8) | PCL;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opSBC() {
