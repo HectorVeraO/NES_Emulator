@@ -237,15 +237,21 @@ uint8_t MOS6502::opASL() {
 }
 
 uint8_t MOS6502::opBCC() {
-
+    if (getFlag(Carry) == 0)
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBCS() {
-
+    if (getFlag(Carry))
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBEQ() {
-
+    if (getFlag(Zero))
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBIT() {
@@ -257,43 +263,62 @@ uint8_t MOS6502::opBIT() {
 }
 
 uint8_t MOS6502::opBMI() {
-
+    if (getFlag(Negative))
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBNE() {
-
+    if (getFlag(Zero) == 0)
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBPL() {
-
+    if (getFlag(Negative) == 0)
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBRK() {
-
+    pushStack((PC & 0xF0) >> 8);
+    pushStack(PC & 0x0F);
+    pushStack(P);
+    PC = 0xFFFF;
+    setFlag(BreakCommand, true);
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBVC() {
-
+    if (getFlag(Overflow) == 0)
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opBVS() {
-
+    if (getFlag(Overflow))
+        PC += opvalue;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opCLC() {
-
+    setFlag(Carry, false);
+    return 0x00;
 }
 
 uint8_t MOS6502::opCLD() {
-
+    setFlag(DecimalMode, false);
+    return 0x00;
 }
 
 uint8_t MOS6502::opCLI() {
-
+    setFlag(InterruptDisable, false);
+    return 0x00;
 }
 
 uint8_t MOS6502::opCLV() {
-
+    setFlag(Overflow, false);
+    return 0x00;
 }
 
 uint8_t MOS6502::opCMP() {
@@ -413,7 +438,7 @@ uint8_t MOS6502::opLSR() {
 }
 
 uint8_t MOS6502::opNOP() {
-
+    return 0xFF;
 }
 
 uint8_t MOS6502::opORA() {
@@ -464,7 +489,11 @@ uint8_t MOS6502::opROR() {
 }
 
 uint8_t MOS6502::opRTI() {
-
+    P = pullStack();
+    uint8_t PCL = pullStack();
+    uint8_t PCH = pullStack();
+    PC = (PCH << 8) | PCL;
+    return 0xFF;
 }
 
 uint8_t MOS6502::opRTS() {
@@ -494,15 +523,18 @@ uint8_t MOS6502::opSBC() {
 }
 
 uint8_t MOS6502::opSEC() {
-
+    setFlag(Carry, true);
+    return 0xFF;
 }
 
 uint8_t MOS6502::opSED() {
-
+    setFlag(DecimalMode, true);
+    return 0xFF;
 }
 
 uint8_t MOS6502::opSEI() {
-
+    setFlag(InterruptDisable, true);
+    return 0xFF;
 }
 
 uint8_t MOS6502::opSTA() {
