@@ -42,6 +42,7 @@ uint8_t MOS6502::getFlag(uint8_t offset) {
     return P & (1 << offset);
 }
 
+// TODO: I feel like there is a way to do this without the ternary.
 void MOS6502::setFlag(uint8_t offset, bool turnOn) {
     P |= turnOn ? 1 << offset : ~(1 << offset);
 }
@@ -208,14 +209,14 @@ uint8_t MOS6502::opADC() {
     uint8_t sumLowByte = sum & 0xFF;
     setFlag(Carry, A > sumLowByte);
     setFlag(Zero, A == 0);
-    bool positiveOverflow = ~((A & 0x80) >> 7) && ~((opvalue & 0x80) >> 7) && ((sumWithoutCarry & 0x80) >> 7);      // For two's complement: if the sum of two positive numbers is negative there's been an overflow
-    bool negativeOverflow = ((A & 0x80) >> 7) && ((opvalue & 0x80) >> 7) && ~((sumWithoutCarry & 0x80) >> 7);       // For two's complement: if the subtraction of two negative numbers is positive there's been an overflow
+    bool positiveOverflow = ~(A & 0x80) && ~(opvalue & 0x80) && (sumWithoutCarry & 0x80);      // For two's complement: if the sum of two positive numbers is negative there's been an overflow
+    bool negativeOverflow = (A & 0x80) && (opvalue & 0x80) && ~(sumWithoutCarry & 0x80);       // For two's complement: if the subtraction of two negative numbers is positive there's been an overflow
     if (carry && !positiveOverflow && !negativeOverflow) {
-        positiveOverflow = ~((sumWithoutCarry & 0x80) >> 7) && ((sum & 0x80) >> 7);
-        negativeOverflow = (sumWithoutCarry & 0x80) >> 7 && ~((sum & 0x80) >> 7);
+        positiveOverflow = ~(sumWithoutCarry & 0x80) && (sum & 0x80);
+        negativeOverflow = (sumWithoutCarry & 0x80) && ~(sum & 0x80);
     }
     setFlag(Overflow, positiveOverflow || negativeOverflow);
-    setFlag(Negative, (sumLowByte & 0x80) >> 7);
+    setFlag(Negative, sumLowByte & 0x80);
     A = sumLowByte;
     return A;
 }
@@ -223,7 +224,7 @@ uint8_t MOS6502::opADC() {
 uint8_t MOS6502::opAND() {
     A &= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
 
@@ -250,8 +251,8 @@ uint8_t MOS6502::opBEQ() {
 uint8_t MOS6502::opBIT() {
     uint8_t nonAccumulatedResult = A & opvalue;
     setFlag(Zero, nonAccumulatedResult == 0);
-    setFlag(Overflow, (nonAccumulatedResult & 0x40) >> 6);
-    setFlag(Negative, (nonAccumulatedResult & 0x80) >> 7);
+    setFlag(Overflow, nonAccumulatedResult & 0x40);
+    setFlag(Negative, nonAccumulatedResult & 0x80);
     return nonAccumulatedResult;
 }
 
@@ -299,7 +300,7 @@ uint8_t MOS6502::opCMP() {
     setFlag(Carry, A >= opvalue);
     setFlag(Zero, A == opvalue);
     uint8_t subtraction = A - opvalue;
-    setFlag(Negative, (subtraction & 0x80) >> 7);
+    setFlag(Negative, subtraction & 0x80);
     return subtraction;
 }
 
@@ -307,7 +308,7 @@ uint8_t MOS6502::opCPX() {
     setFlag(Carry, X >= opvalue);
     setFlag(Zero, X == opvalue);
     uint8_t subtraction = X - opvalue;
-    setFlag(Negative, (subtraction & 0x80) >> 7);
+    setFlag(Negative, subtraction & 0x80);
     return subtraction;
 }
 
@@ -315,7 +316,7 @@ uint8_t MOS6502::opCPY() {
     setFlag(Carry, Y >= opvalue);
     setFlag(Zero, Y == opvalue);
     uint8_t subtraction = Y - opvalue;
-    setFlag(Negative, (subtraction & 0x80) >> 7);
+    setFlag(Negative, subtraction & 0x80);
     return subtraction;
 }
 
@@ -344,7 +345,7 @@ uint8_t MOS6502::opDEY() {
 uint8_t MOS6502::opEOR() {
     A ^= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
 
@@ -384,21 +385,21 @@ uint8_t MOS6502::opJSR() {
 
 uint8_t MOS6502::opLDA() {
     A = opvalue;
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     setFlag(Zero, A == 0);
     return A;
 }
 
 uint8_t MOS6502::opLDX() {
     X = opvalue;
-    setFlag(Negative, (X & 0x80) >> 7);
+    setFlag(Negative, X & 0x80);
     setFlag(Zero, X == 0);
     return X;
 }
 
 uint8_t MOS6502::opLDY() {
     Y = opvalue;
-    setFlag(Negative, (Y & 0x80) >> 7);
+    setFlag(Negative, Y & 0x80);
     setFlag(Zero, Y == 0);
     return Y;
 }
@@ -418,7 +419,7 @@ uint8_t MOS6502::opNOP() {
 uint8_t MOS6502::opORA() {
     A |= opvalue;
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
 
@@ -435,7 +436,7 @@ uint8_t MOS6502::opPHP() {
 uint8_t MOS6502::opPLA() {
     A = pullStack();
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
 
@@ -480,14 +481,14 @@ uint8_t MOS6502::opSBC() {
     uint8_t subtractionLowByte = subtraction & 0x80;
     setFlag(Carry, A > subtractionLowByte);
     setFlag(Zero, A == 0);
-    bool pnOverflow = ~((A & 0x80) >> 7) && ((opvalue & 0x80) >> 7) && std::abs((int8_t) A - INT8_MIN) <= std::abs((int8_t) opvalue);
-    bool npOverflow = ((A & 0x80) >> 7) && ~((opvalue & 0x80) >> 7) && std::abs((int8_t) A - INT8_MAX) <= std::abs((int8_t) opvalue);
+    bool pnOverflow = ~(A & 0x80) && (opvalue & 0x80) && std::abs((int8_t) A - INT8_MIN) <= std::abs((int8_t) opvalue);
+    bool npOverflow = (A & 0x80) && ~(opvalue & 0x80) && std::abs((int8_t) A - INT8_MAX) <= std::abs((int8_t) opvalue);
     if (carry && !npOverflow && !pnOverflow) {
-        pnOverflow = ~((subtractionWithoutCarry & 0x80) >> 7) && std::abs((int8_t) subtractionWithoutCarry - INT8_MIN) <= std::abs((int8_t) carry);
-        npOverflow = ((subtractionWithoutCarry & 0x80) >> 7) && std::abs((int8_t) subtractionWithoutCarry - INT8_MAX) <= std::abs((int8_t) carry);
+        pnOverflow = ~(subtractionWithoutCarry & 0x80) && std::abs((int8_t) subtractionWithoutCarry - INT8_MIN) <= std::abs((int8_t) carry);
+        npOverflow = (subtractionWithoutCarry & 0x80) && std::abs((int8_t) subtractionWithoutCarry - INT8_MAX) <= std::abs((int8_t) carry);
     }
     setFlag(Overflow, pnOverflow || npOverflow);
-    setFlag(Negative, (subtractionLowByte & 0x80) >> 7);
+    setFlag(Negative, subtractionLowByte & 0x80);
     A = subtractionLowByte;
     return A;
 }
@@ -522,28 +523,28 @@ uint8_t MOS6502::opSTY() {
 uint8_t MOS6502::opTAX() {
     X = A;
     setFlag(Zero, X == 0);
-    setFlag(Negative, (X & 0x80) >> 7);
+    setFlag(Negative, X & 0x80);
     return X;
 }
 
 uint8_t MOS6502::opTAY() {
     Y = A;
     setFlag(Zero, Y == 0);
-    setFlag(Negative, (Y & 0x80) >> 7);
+    setFlag(Negative, Y & 0x80);
     return Y;
 }
 
 uint8_t MOS6502::opTSX() {
     X = S;
     setFlag(Zero, X == 0);
-    setFlag(Negative, (X & 0x80) >> 7);
+    setFlag(Negative, X & 0x80);
     return X;
 }
 
 uint8_t MOS6502::opTXA() {
     A = X;
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
 
@@ -555,6 +556,6 @@ uint8_t MOS6502::opTXS() {
 uint8_t MOS6502::opTYA() {
     A = Y;
     setFlag(Zero, A == 0);
-    setFlag(Negative, (A & 0x80) >> 7);
+    setFlag(Negative, A & 0x80);
     return A;
 }
