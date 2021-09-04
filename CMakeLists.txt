@@ -11,4 +11,4 @@ add_executable(NES_Emulator
         source/bus/Bus.h
         source/processor/MOS6502/MOS6502.cpp
         source/processor/MOS6502/MOS6502.h
-        main.cpp source/nes/NES.cpp source/nes/NES.h)
+        main.cpp source/nes/NES.cpp source/nes/NES.h source/processor/MOS6502/execute.cpp)

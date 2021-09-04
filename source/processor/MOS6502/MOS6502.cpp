@@ -47,56 +47,6 @@ void MOS6502::setFlag(uint8_t offset, bool turnOn) {
     P |= turnOn ? 1 << offset : ~(1 << offset);
 }
 
-void MOS6502::execute() {
-    opcode = readMemory(PC);
-    PC++;
-
-    switch (opcode) {
-        case 0x00: {
-            amIMP();
-            opBRK();
-            break;
-        }
-        case 0x04: {
-            amZP();
-            opNOP();
-            break;
-        }
-        case 0x08: {
-            amIMP();
-            opPHP();
-            break;
-        }
-        case 0x0C: {
-            amABS();
-            opNOP();
-            break;
-        }
-        case 0x10: {
-            amREL();
-            opBPL();
-            break;
-        }
-        case 0x14: {
-            amZPX();
-            opNOP();
-            break;
-        }
-        case 0x18: {
-            amIMP();
-            opCLC();
-            break;
-        }
-        case 0x1C: {
-            amABSX();
-            opNOP();
-            break;
-        }
-
-        default: opUnimplementedInstruction();
-    }
-}
-
 void MOS6502::opUnimplementedInstruction() {
     std::cout << "Operation not implemented\n";
 }
