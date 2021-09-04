@@ -88,8 +88,10 @@ void MOS6502::amREL() {
     addressingMode = AddressingMode::Relative;
     uint8_t offset = readMemory(PC);
     PC += 2;
+    uint8_t PCL = PC & 0x00FF;
     opaddress = PC + offset;
     opvalue = readMemory(opaddress);
+    crossedPageBoundary = offset > (PCL + offset);
 }
 
 void MOS6502::amIND() {
@@ -122,14 +124,16 @@ void MOS6502::amABSX() {
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + X;
     opvalue = readMemory(opaddress);
+    crossedPageBoundary = X > (lowByte + X);
 }
 
 void MOS6502::amABSY() {
     addressingMode = AddressingMode::AbsoluteY;
     uint16_t lowByte = readMemory(PC++);
-    uint16_t highByte = readMemory(PC++);
+    uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + Y;
     opvalue = readMemory(opaddress);
+    crossedPageBoundary = Y > (lowByte + Y);
 }
 
 void MOS6502::amINDX() {
@@ -149,6 +153,7 @@ void MOS6502::amINDY() {
     uint8_t highByte = readMemory(PC++) + carry;
     opaddress = (highByte << 8) | lowByte;
     opvalue = readMemory(opaddress);
+    crossedPageBoundary = carry;
 }
 
 // TODO: Even if it works I don't like it. Make it better. Horrible bit manipulation.

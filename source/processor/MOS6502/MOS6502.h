@@ -26,8 +26,10 @@ private:
     uint8_t Y;    // Index Y
 
     uint8_t opcode{};
-    uint8_t opvalue{};      // Value obtained through the addressing mode
-    uint16_t opaddress{};   // Address obtained though the addressing mode
+    uint8_t opvalue{};          // Value obtained through the addressing mode
+    uint16_t opaddress{};       // Address obtained though the addressing mode
+    uint8_t opcycles{};
+    bool crossedPageBoundary;
 
     enum AddressingMode {
         None = -1,
