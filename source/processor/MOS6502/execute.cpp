@@ -157,54 +157,53 @@ void MOS6502::execute() {
             break;
         }
 
-        // TODO: Handle extra cycle if branch is taken
         // Branch calls
         case 0x10: {
             amREL();
             opBPL();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0x30: {
             amREL();
             opBMI();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0x50: {
             amREL();
             opBVC();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0x70: {
             amREL();
             opBVS();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0x90: {
             amREL();
             opBCC();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0xB0: {
             amREL();
             opBCS();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0xD0: {
             amREL();
             opBNE();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
         case 0xF0: {
             amREL();
             opBEQ();
-            opcycles += 2 + crossedPageBoundary;
+            opcycles += 2 + isBranchTaken + crossedPageBoundary;
             break;
         }
 

@@ -192,19 +192,22 @@ uint8_t MOS6502::opASL() {
 }
 
 uint8_t MOS6502::opBCC() {
-    if (getFlag(Flag::Carry) == 0)
+    isBranchTaken = getFlag(Flag::Carry) == 0;
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
 
 uint8_t MOS6502::opBCS() {
-    if (getFlag(Flag::Carry))
+    isBranchTaken = getFlag(Flag::Carry);
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
 
 uint8_t MOS6502::opBEQ() {
-    if (getFlag(Flag::Zero))
+    isBranchTaken = getFlag(Flag::Zero);
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
@@ -218,19 +221,22 @@ uint8_t MOS6502::opBIT() {
 }
 
 uint8_t MOS6502::opBMI() {
-    if (getFlag(Flag::Negative))
+    isBranchTaken = getFlag(Flag::Negative);
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
 
 uint8_t MOS6502::opBNE() {
-    if (getFlag(Flag::Zero) == 0)
+    isBranchTaken = getFlag(Flag::Zero) == 0;
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
 
 uint8_t MOS6502::opBPL() {
-    if (getFlag(Flag::Negative) == 0)
+    isBranchTaken = getFlag(Flag::Negative) == 0;
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
@@ -245,13 +251,15 @@ uint8_t MOS6502::opBRK() {
 }
 
 uint8_t MOS6502::opBVC() {
-    if (getFlag(Flag::Overflow) == 0)
+    isBranchTaken = getFlag(Flag::Overflow) == 0;
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
 
 uint8_t MOS6502::opBVS() {
-    if (getFlag(Flag::Overflow))
+    isBranchTaken = getFlag(Flag::Overflow);
+    if (isBranchTaken)
         PC += opvalue;
     return 0xFF;
 }
