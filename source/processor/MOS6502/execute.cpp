@@ -51,7 +51,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // AND calls (bitwise and)
+        // AND calls (bitwise and)
         case 0x29: {
             amIMM();
             opAND();
@@ -93,7 +93,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // ASL calls (arithmetic shift left)
+        // ASL calls (arithmetic shift left)
         case 0x0A: {
             amACC();
             opASL();
@@ -120,7 +120,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // BIT calls
+        // BIT calls
         case 0x24: {
             amZP();
             opBIT();
@@ -132,7 +132,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // Branch calls
+        // Branch calls
         case 0x10: {
             amREL();
             opBPL();
@@ -174,14 +174,14 @@ void MOS6502::execute() {
             break;
         }
 
-            // BRK calls (break)
+        // BRK calls (break)
         case 0x00: {
             amIMP();
             opBRK();
             break;
         }
 
-            // CMP calls (compare accumulator)
+        // CMP calls (compare accumulator)
         case 0xC9: {
             amIMM();
             opCMP();
@@ -223,7 +223,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // CPX calls (compare X register)
+        // CPX calls (compare X register)
         case 0xE0: {
             amIMM();
             opCPX();
@@ -240,7 +240,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // CPY calls (compare Y register)
+        // CPY calls (compare Y register)
         case 0xC0: {
             amIMM();
             opCPY();
@@ -257,7 +257,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // DEC calls (decrement)
+        // DEC calls (decrement)
         case 0xC6: {
             amZP();
             opDEC();
@@ -279,7 +279,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // EOR calls (bitwise exclusive or)
+        // EOR calls (bitwise exclusive or)
         case 0x49: {
             amIMM();
             opEOR();
@@ -321,7 +321,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // Flag instructions call (processor status)
+        // Flag instructions call (processor status)
         case 0x18: {
             amIMP();
             opCLC();
@@ -358,7 +358,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // INC calls (increment memory)
+        // INC calls (increment memory)
         case 0xE6: {
             amZP();
             opINC();
@@ -380,7 +380,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // JMP calls (jump)
+        // JMP calls (jump)
         case 0x4C: {
             amABS();
             opJMP();
@@ -392,14 +392,14 @@ void MOS6502::execute() {
             break;
         }
 
-            // JSR calls (jump to subroutine)
+        // JSR calls (jump to subroutine)
         case 0x20: {
             amABS();
             opJSR();
             break;
         }
 
-            // LDA calls (load accumulator)
+        // LDA calls (load accumulator)
         case 0xA9: {
             amIMM();
             opLDA();
@@ -441,7 +441,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // LDX calls (load X register)
+        // LDX calls (load X register)
         case 0xA2: {
             amIMM();
             opLDX();
@@ -468,7 +468,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // LDY (load Y register)
+        // LDY (load Y register)
         case 0xA0: {
             amIMM();
             opLDY();
@@ -495,7 +495,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // LSR calls (logical shift right)
+        // LSR calls (logical shift right)
         case 0x4A: {
             amACC();
             opLSR();
@@ -510,7 +510,8 @@ void MOS6502::execute() {
             amZPX();
             opLSR();
             break;
-        }case 0x4E: {
+        }
+        case 0x4E: {
             amABS();
             opLSR();
             break;
@@ -521,14 +522,14 @@ void MOS6502::execute() {
             break;
         }
 
-            // NOP calls (no operation)
+        // NOP calls (no operation)
         case 0xEA: {
             amIMP();
             opNOP();
             break;
         }
 
-            // ORA calls (bitwise or with accumulator)
+        // ORA calls (bitwise or with accumulator)
         case 0x09: {
             amIMM();
             opORA();
@@ -570,7 +571,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // Register instructions calls
+        // Register instructions calls
         case 0xAA: {
             amIMP();
             opTAX();
@@ -612,7 +613,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // ROL calls (rotate left)
+        // ROL calls (rotate left)
         case 0x2A: {
             amACC();
             opROL();
@@ -639,7 +640,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // ROR calls (rotate right)
+        // ROR calls (rotate right)
         case 0x6A: {
             amACC();
             opROR();
@@ -666,21 +667,21 @@ void MOS6502::execute() {
             break;
         }
 
-            // RTI calls (return from interrupt)
+        // RTI calls (return from interrupt)
         case 0x40: {
             amIMP();
             opRTI();
             break;
         }
 
-            // RTS calls (return from subroutine)
+        // RTS calls (return from subroutine)
         case 0x60: {
             amIMP();
             opRTS();
             break;
         }
 
-            // SBC calls (subtract with carry)
+        // SBC calls (subtract with carry)
         case 0xE9: {
             amIMM();
             opSBC();
@@ -722,7 +723,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // STA calls (store accumulator)
+        // STA calls (store accumulator)
         case 0x85: {
             amZP();
             opSTA();
@@ -759,7 +760,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // Stack instructions calls
+        // Stack instructions calls
         case 0x9A: {
             amIMP();
             opTXS();
@@ -791,7 +792,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // STX calls (store X register)
+        // STX calls (store X register)
         case 0x86: {
             amZP();
             opSTX();
@@ -808,7 +809,7 @@ void MOS6502::execute() {
             break;
         }
 
-            // STY calls (store Y register)
+        // STY calls (store Y register)
         case 0x84: {
             amZP();
             opSTY();
