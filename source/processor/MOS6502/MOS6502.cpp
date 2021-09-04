@@ -38,12 +38,12 @@ void MOS6502::pushStack(uint8_t value) {
     writeMemory(address, value);
 }
 
-uint8_t MOS6502::getFlag(Flag::uint8_t offset) const {
+uint8_t MOS6502::getFlag(uint8_t offset) const {
     return P & (1 << offset);
 }
 
 // TODO: I feel like there is a way to do this without the ternary.
-void MOS6502::setFlag(Flag::uint8_t offset, bool turnOn) {
+void MOS6502::setFlag(uint8_t offset, bool turnOn) {
     P |= turnOn ? 1 << offset : ~(1 << offset);
 }
 
