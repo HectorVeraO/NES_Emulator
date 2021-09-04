@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
-project(NES_Emulator)
+project(WDNES)
 
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(source/bus)
 include_directories(source/processor/MOS6502)
 
-add_executable(NES_Emulator
+add_executable(WDNES
         source/bus/Bus.cpp
         source/bus/Bus.h
         source/processor/MOS6502/MOS6502.cpp
