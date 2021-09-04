@@ -30,6 +30,7 @@ private:
     uint16_t opaddress{};   // Address obtained though the addressing mode
 
     enum AddressingMode {
+        None = -1,
         Implicit = 0,
         Accumulator = 1,
         Immediate = 2,
@@ -66,7 +67,7 @@ private:
 
     void pushStack(uint8_t value);
 
-    uint8_t getFlag(uint8_t offset);
+    uint8_t getFlag(uint8_t offset) const;
 
     void setFlag(uint8_t offset, bool turnOn);
 
@@ -165,7 +166,7 @@ private:
 
     uint8_t opLSR();
 
-    uint8_t opNOP();
+    static uint8_t opNOP();
 
     uint8_t opORA();
 
