@@ -3,12 +3,12 @@ project(WDNES)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(source/bus)
-include_directories(source/processor/MOS6502)
+include_directories(NES/bus)
+include_directories(NES/MOS6502)
 
 add_executable(WDNES
-        source/bus/Bus.cpp
-        source/bus/Bus.h
-        source/processor/MOS6502/MOS6502.cpp
-        source/processor/MOS6502/MOS6502.h
-        main.cpp source/nes/NES.cpp source/nes/NES.h source/processor/MOS6502/execute.cpp)
+        NES/bus/Bus.cpp
+        NES/bus/Bus.h
+        NES/MOS6502/MOS6502.cpp
+        NES/MOS6502/MOS6502.h
+        main.cpp NES/nes/NES.cpp NES/nes/NES.h NES/MOS6502/execute.cpp)
