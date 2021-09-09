@@ -3,3 +3,5 @@
 //
 
 #include "Mapper.h"
+
+Mapper::~Mapper() = default;

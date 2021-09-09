@@ -1,11 +1,18 @@
 #include "Bus.h"
 
 Bus::Bus() {
-    for (auto &slot : ram)
+    cartridge = nullptr;
+    for (auto& slot: ram)
         slot = 0x00;
 };
 
-Bus::~Bus() = default;
+Bus::~Bus() {
+    delete cartridge;
+};
+
+void Bus::connectCartridge(std::string const& cartridgePath) {
+    cartridge = new Cartridge(cartridgePath);
+}
 
 uint8_t Bus::readMemory(uint16_t address) {
     if (address < 0x2000)

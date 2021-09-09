@@ -9,7 +9,7 @@
 
 class Mapper {
 public:
-    virtual ~Mapper() = 0;
+    virtual ~Mapper();
 
     virtual uint16_t mapToPRG(uint16_t address) const = 0;
 
