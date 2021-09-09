@@ -20,11 +20,11 @@ void MOS6502::connectBus(Bus *newBus) {
 }
 
 uint8_t MOS6502::readMemory(uint16_t address) const {
-    return bus->readRAM(address);
+    return bus->readMemory(address);
 }
 
 void MOS6502::writeMemory(uint16_t address, uint8_t value) const {
-    bus->writeRAM(address, value);
+    bus->writeMemory(address, value);
 }
 
 uint8_t MOS6502::pullStack() {

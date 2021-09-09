@@ -11,4 +11,4 @@ add_executable(WDNES
         NES/bus/Bus.h
         NES/MOS6502/MOS6502.cpp
         NES/MOS6502/MOS6502.h
-        main.cpp NES/nes/NES.cpp NES/nes/NES.h NES/MOS6502/execute.cpp)
+        main.cpp NES/MOS6502/execute.cpp NES/Mapper/Mapper0.cpp NES/Mapper/Mapper0.h NES/Mapper/Mapper.cpp NES/Mapper/Mapper.h NES/Cartridge/Cartridge.cpp NES/Cartridge/Cartridge.h)

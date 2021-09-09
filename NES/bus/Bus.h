@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+#include "../Cartridge/Cartridge.h"
 
 class MOS6502;
 
@@ -11,10 +12,15 @@ public:
 
     ~Bus();
 
-    uint8_t readRAM(uint16_t address);
+    uint8_t readMemory(uint16_t address);
 
-    void writeRAM(uint16_t address, uint8_t value);
+    void writeMemory(uint16_t address, uint8_t value);
 
 private:
-    std::array<uint8_t, 0xFFFF> RAM;
+    Cartridge *cartridge;
+
+    std::array<uint8_t, 0x0800> ram{};
+    std::array<uint8_t, 0x0028> ioRegisters{};
+    std::array<uint8_t, 0x1FE0> expansionROM{};
+    std::array<uint8_t, 0x2000> sram{};
 };
