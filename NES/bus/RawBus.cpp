@@ -3,6 +3,7 @@
 //
 
 #include "RawBus.h"
+#include <utility>
 
 RawBus::RawBus(std::string const& mos6502ROMPath) {
     std::ifstream romifs(mos6502ROMPath, std::ios::ate);
@@ -15,6 +16,10 @@ RawBus::RawBus(std::string const& mos6502ROMPath) {
     }
 }
 
+RawBus::RawBus(std::vector<uint8_t> rom) : memory(std::move(rom)) {
+
+}
+
 RawBus::~RawBus() = default;
 
 uint8_t RawBus::readMemory(uint16_t address) const {
@@ -24,4 +29,3 @@ uint8_t RawBus::readMemory(uint16_t address) const {
 void RawBus::writeMemory(uint16_t address, uint8_t value) {
     memory[address] = value;
 }
-

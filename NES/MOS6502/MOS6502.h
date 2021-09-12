@@ -3,19 +3,78 @@
 #include <cstdint>
 #include "Bus.h"
 
-class Bus;
-
 class MOS6502 {
 public:
+    enum Flag {
+        Carry = 0,
+        Zero = 1,
+        InterruptDisable = 2,
+        DecimalMode = 3,
+        BreakCommand = 4,
+        B = 5,
+        Overflow = 6,           // Indicates if there's a two's complement overflow
+        Negative = 7
+    };
+
     MOS6502();
-    explicit MOS6502(uint16_t newPC);
     ~MOS6502();
 
     void loop();
+    void clock();
     void executeOperation();
     void connectBus(Bus* newBus);
 
+    inline uint16_t getPC() const {
+        return PC;
+    }
 
+    inline void setPC(uint16_t newPC) {
+        PC = newPC;
+    }
+
+    inline uint8_t getS() const {
+        return S;
+    }
+
+    inline void setS(uint8_t s) {
+        S = s;
+    }
+
+    inline uint8_t getP() const {
+        return P;
+    }
+
+    inline void setP(uint8_t p) {
+        P = p;
+    }
+
+    inline uint8_t getA() const {
+        return A;
+    }
+
+    inline void setA(uint8_t a) {
+        A = a;
+    }
+
+    inline uint8_t getX() const {
+        return X;
+    }
+
+    inline void setX(uint8_t x) {
+        X = x;
+    }
+
+    inline uint8_t getY() const {
+        return Y;
+    }
+
+    inline void setY(uint8_t y) {
+        Y = y;
+    }
+
+
+    uint8_t getFlag(uint8_t offset) const;
+    void setFlag(uint8_t offset, bool turnOn);
 private:
     Bus* bus;
 
@@ -51,17 +110,6 @@ private:
         IndirectIndexed = 12
     };
 
-    enum Flag {
-        Carry = 0,
-        Zero = 1,
-        InterruptDisable = 2,
-        DecimalMode = 3,
-        BreakCommand = 4,
-        B = 5,
-        Overflow = 6,           // Indicates if there's a two's complement overflow
-        Negative = 7
-    };
-
     AddressingMode addressingMode;
 
     uint8_t readMemory(uint16_t address) const;
@@ -71,10 +119,6 @@ private:
     uint8_t pullStack();
 
     void pushStack(uint8_t value);
-
-    uint8_t getFlag(uint8_t offset) const;
-
-    void setFlag(uint8_t offset, bool turnOn);
 
     // Addressing modes
     void amIMP();

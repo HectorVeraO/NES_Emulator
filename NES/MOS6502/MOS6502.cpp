@@ -4,44 +4,34 @@
 MOS6502::MOS6502() {
     bus = nullptr;
     addressingMode = AddressingMode::None;
-    PC = 0;
-    S = 0;
-    P = 0;
-    A = 0;
-    X = 0;
-    Y = 0;
-    opcode = 0;
-    on = true;
-}
-
-MOS6502::MOS6502(uint16_t newPC) {
-    bus = nullptr;
-    addressingMode = AddressingMode::None;
-    PC = newPC;
-    S = 0;
-    P = 0;
-    A = 0;
-    X = 0;
-    Y = 0;
-    opcode = 0;
+    PC = 0x0000;
+    S = 0x00;
+    P = 0x00;
+    A = 0x00;
+    X = 0x00;
+    Y = 0x00;
+    opcode = 0x00;
     on = true;
 }
 
 MOS6502::~MOS6502() = default;
 
-void MOS6502::loop() {
-    while (on) {
-        if (opcycles > 0) {
-            opcycles--;
-            continue;
-        }
-
+void MOS6502::clock() {
+    if (opcycles > 0) {
+        opcycles--;
+    } else {
         opcode = readMemory(PC);
         PC++;
         crossedPageBoundary = false;
         opcycles = 0;
 
         executeOperation();
+    }
+}
+
+void MOS6502::loop() {
+    while (on) {
+        clock();
     }
 }
 
@@ -69,12 +59,15 @@ void MOS6502::pushStack(uint8_t value) {
 }
 
 uint8_t MOS6502::getFlag(uint8_t offset) const {
-    return P & (1 << offset);
+    return (P >> offset) & 1;
 }
 
-// TODO: I feel like there is a way to do this without the ternary.
 void MOS6502::setFlag(uint8_t offset, bool turnOn) {
-    P |= turnOn ? 1 << offset : ~(1 << offset);
+    if (turnOn) {
+        P |= (1 << offset);
+    } else {
+        P &= ~(1 << offset);
+    }
 }
 
 void MOS6502::opUnimplementedInstruction() {
@@ -189,20 +182,24 @@ void MOS6502::amINDY() {
 // TODO: Even if it works I don't like it. Make it better. Horrible bit manipulation.
 uint8_t MOS6502::opADC() {
     uint8_t carry = getFlag(Flag::Carry);
-    uint16_t sumWithoutCarry = A + opvalue;
-    uint16_t sum = sumWithoutCarry + carry;
-    uint8_t sumLowByte = sum & 0xFF;
-    setFlag(Flag::Carry, A > sumLowByte);
-    setFlag(Flag::Zero, A == 0);
-    bool positiveOverflow = ~(A & 0x80) && ~(opvalue & 0x80) && (sumWithoutCarry & 0x80);      // For two's complement: if the sum of two positive numbers is negative there's been an overflow
-    bool negativeOverflow = (A & 0x80) && (opvalue & 0x80) && ~(sumWithoutCarry & 0x80);       // For two's complement: if the subtraction of two negative numbers is positive there's been an overflow
-    if (carry && !positiveOverflow && !negativeOverflow) {
-        positiveOverflow = ~(sumWithoutCarry & 0x80) && (sum & 0x80);
-        negativeOverflow = (sumWithoutCarry & 0x80) && ~(sum & 0x80);
+    uint16_t sum = A + opvalue;
+    bool hasCarry = A > (sum & 0x00FF);
+    bool operandsShareSign = (A & 0x80) == (opvalue & 0x80);    // For two's complement: if the sum's operands share sign and the result has a different sign there's been an overflow
+    bool sumHasDifferentSign = (A & 0x80) ^ (sum & 0x0080);
+    bool overflow = operandsShareSign && sumHasDifferentSign;
+
+    if (carry && !overflow) {
+        operandsShareSign = (sum & 0x80) == 0x00;
+        sum += carry;
+        sumHasDifferentSign = sum & 0x80;
+        overflow = operandsShareSign && sumHasDifferentSign;
     }
-    setFlag(Flag::Overflow, positiveOverflow || negativeOverflow);
-    setFlag(Flag::Negative, sumLowByte & 0x80);
-    A = sumLowByte;
+
+    A = sum & 0x00FF;
+    setFlag(Flag::Carry, hasCarry);
+    setFlag(Flag::Zero, A == 0);
+    setFlag(Flag::Overflow, overflow);
+    setFlag(Flag::Negative, A & 0x80);
     return A;
 }
 
