@@ -14,11 +14,11 @@
 
 class Cartridge {
 public:
-    Cartridge(const std::string &filepath);
+    explicit Cartridge(std::string sfilepath);
 
     virtual ~Cartridge();
 
-    uint8_t readMemory(uint16_t address) const;
+    [[nodiscard]] uint8_t readMemory(uint16_t address) const;
 
     void writeMemory(uint16_t address, uint8_t value);
 

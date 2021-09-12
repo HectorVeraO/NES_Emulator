@@ -4,12 +4,7 @@
 
 #include "MOS6502.h"
 
-void MOS6502::execute() {
-    opcode = readMemory(PC);
-    PC++;
-    crossedPageBoundary = false;
-    opcycles = 0;
-
+void MOS6502::executeOperation() {
     switch (opcode) {
         // ADC calls (add with carry)
         case 0x69: {

@@ -11,11 +11,41 @@ MOS6502::MOS6502() {
     X = 0;
     Y = 0;
     opcode = 0;
+    on = true;
+}
+
+MOS6502::MOS6502(uint16_t newPC) {
+    bus = nullptr;
+    addressingMode = AddressingMode::None;
+    PC = newPC;
+    S = 0;
+    P = 0;
+    A = 0;
+    X = 0;
+    Y = 0;
+    opcode = 0;
+    on = true;
 }
 
 MOS6502::~MOS6502() = default;
 
-void MOS6502::connectBus(Bus *newBus) {
+void MOS6502::loop() {
+    while (on) {
+        if (opcycles > 0) {
+            opcycles--;
+            continue;
+        }
+
+        opcode = readMemory(PC);
+        PC++;
+        crossedPageBoundary = false;
+        opcycles = 0;
+
+        executeOperation();
+    }
+}
+
+void MOS6502::connectBus(Bus* newBus) {
     this->bus = newBus;
 }
 

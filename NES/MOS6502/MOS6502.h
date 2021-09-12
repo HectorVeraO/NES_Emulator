@@ -8,15 +8,16 @@ class Bus;
 class MOS6502 {
 public:
     MOS6502();
-
+    explicit MOS6502(uint16_t newPC);
     ~MOS6502();
 
-    void execute();
+    void loop();
+    void executeOperation();
+    void connectBus(Bus* newBus);
 
-    void connectBus(Bus *newBus);
 
 private:
-    Bus *bus;
+    Bus* bus;
 
     uint16_t PC;  // Program counter
     uint8_t S;    // Stack pointer
@@ -25,6 +26,7 @@ private:
     uint8_t X;    // Index X
     uint8_t Y;    // Index Y
 
+    bool on{ false };
     uint8_t opcode{};
     uint8_t opvalue{};                  // Value obtained through the addressing mode
     uint16_t opaddress{};               // Address obtained though the addressing mode

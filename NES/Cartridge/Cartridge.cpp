@@ -3,12 +3,14 @@
 //
 
 #include "Cartridge.h"
+
+#include <utility>
 #include "../Mapper/Mapper0.h"
 
-Cartridge::Cartridge(const std::string &filepath) : filepath(filepath) {
-    std::ifstream romifs(filepath);
+Cartridge::Cartridge(std::string  sfilepath) : filepath(std::move(sfilepath)) {
+    std::ifstream romifs(filepath, std::ios::binary);
     if (romifs.is_open()) {
-        romifs.read(reinterpret_cast<char *>(&header), sizeof header);
+        romifs.read(reinterpret_cast<char*>(&header), sizeof header);
 
         if (header.romControl1 & 0x04)  // Skip trainer
             romifs.ignore(512);
@@ -29,11 +31,11 @@ Cartridge::Cartridge(const std::string &filepath) : filepath(filepath) {
 
         uint32_t prgROMSize = header.prgRomBankCount * 0x4000;
         prgROM.resize(prgROMSize);
-        romifs.read(reinterpret_cast<char *>(prgROM.data()), prgROMSize);
+        romifs.read(reinterpret_cast<char*>(prgROM.data()), prgROMSize);
 
         uint32_t chrROMSize = header.chrRomBankCount * 0x2000;
         chrROM.resize(chrROMSize);
-        romifs.read(reinterpret_cast<char *>(chrROM.data()), chrROMSize);
+        romifs.read(reinterpret_cast<char*>(chrROM.data()), chrROMSize);
 
         romifs.close();
     }
