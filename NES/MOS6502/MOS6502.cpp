@@ -183,16 +183,17 @@ void MOS6502::amINDY() {
 uint8_t MOS6502::opADC() {
     uint8_t carry = getFlag(Flag::Carry);
     uint16_t sum = A + opvalue;
-    bool hasCarry = A > (sum & 0x00FF);
+    bool hasCarry = sum > 0x00FF;
     bool operandsShareSign = (A & 0x80) == (opvalue & 0x80);    // For two's complement: if the sum's operands share sign and the result has a different sign there's been an overflow
     bool sumHasDifferentSign = (A & 0x80) ^ (sum & 0x0080);
     bool overflow = operandsShareSign && sumHasDifferentSign;
 
-    if (carry && !overflow) {
-        operandsShareSign = (sum & 0x80) == 0x00;
+    if (carry) {
+        operandsShareSign = (sum & 0x0080) == 0x00;
         sum += carry;
-        sumHasDifferentSign = sum & 0x80;
-        overflow = operandsShareSign && sumHasDifferentSign;
+        sumHasDifferentSign = sum & 0x0080;
+        overflow = overflow || (operandsShareSign && sumHasDifferentSign);
+        hasCarry = sum > 0x00FF;
     }
 
     A = sum & 0x00FF;
@@ -494,22 +495,8 @@ uint8_t MOS6502::opRTS() {
 }
 
 uint8_t MOS6502::opSBC() {
-    uint8_t carry = getFlag(Flag::Carry);
-    uint16_t subtractionWithoutCarry = A - opvalue;
-    uint16_t subtraction = subtractionWithoutCarry - carry;
-    uint8_t subtractionLowByte = subtraction & 0x80;
-    setFlag(Flag::Carry, A > subtractionLowByte);
-    setFlag(Flag::Zero, A == 0);
-    bool pnOverflow = ~(A & 0x80) && (opvalue & 0x80) && std::abs((int8_t) A - INT8_MIN) <= std::abs((int8_t) opvalue);
-    bool npOverflow = (A & 0x80) && ~(opvalue & 0x80) && std::abs((int8_t) A - INT8_MAX) <= std::abs((int8_t) opvalue);
-    if (carry && !npOverflow && !pnOverflow) {
-        pnOverflow = ~(subtractionWithoutCarry & 0x80) && std::abs((int8_t) subtractionWithoutCarry - INT8_MIN) <= std::abs((int8_t) carry);
-        npOverflow = (subtractionWithoutCarry & 0x80) && std::abs((int8_t) subtractionWithoutCarry - INT8_MAX) <= std::abs((int8_t) carry);
-    }
-    setFlag(Flag::Overflow, pnOverflow || npOverflow);
-    setFlag(Flag::Negative, subtractionLowByte & 0x80);
-    A = subtractionLowByte;
-    return A;
+    opvalue = ~opvalue;
+    return opADC();
 }
 
 uint8_t MOS6502::opSEC() {
