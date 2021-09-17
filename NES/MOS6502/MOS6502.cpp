@@ -572,6 +572,7 @@ uint8_t MOS6502::opTYA() {
 }
 
 void MOS6502::interrupt(uint16_t pclAddress, uint16_t pchAddress) {
+    opcycles = 7;
     uint8_t PCL = PC & 0x00FF;
     uint8_t PCH = (PC & 0xFF00) >> 8;
     pushStack(PCH);
@@ -596,4 +597,8 @@ void MOS6502::interruptIRQ() {
         setFlag(Flag::B, false);
         interrupt(0xFFFE, 0xFFFF);
     }
+}
+
+void MOS6502::interruptReset() {
+    interrupt(0xFFFC, 0xFFFD);
 }
