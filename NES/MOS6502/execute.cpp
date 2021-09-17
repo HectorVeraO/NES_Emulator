@@ -974,6 +974,6 @@ void MOS6502::executeOperation() {
             break;
         }
 
-        default: opUnimplementedInstruction();
+        default: handleInstructionOperation();
     }
 }

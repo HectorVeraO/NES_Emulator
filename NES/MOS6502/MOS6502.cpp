@@ -12,6 +12,7 @@ MOS6502::MOS6502() {
     Y = 0x00;
     opcode = 0x00;
     on = true;
+    irqHandler = &MOS6502::interruptNONE;
 }
 
 MOS6502::~MOS6502() = default;
@@ -26,6 +27,9 @@ void MOS6502::clock() {
         opcycles = 0;
 
         executeOperation();
+        setFlag(Flag::B, true);
+
+        (this->*irqHandler)();
     }
 }
 
@@ -70,7 +74,7 @@ void MOS6502::setFlag(uint8_t offset, bool turnOn) {
     }
 }
 
-void MOS6502::opUnimplementedInstruction() {
+void MOS6502::handleInstructionOperation() {
     std::cout << "Operation not implemented\n";
 }
 
@@ -270,10 +274,8 @@ uint8_t MOS6502::opBPL() {
 }
 
 uint8_t MOS6502::opBRK() {
-    pushStack((PC & 0xFF00) >> 8);
-    pushStack(PC & 0x00FF);
-    pushStack(P);
-    PC = 0xFFFF;
+    PC++;
+    interrupt(0xFFFE, 0xFFFF);
     setFlag(Flag::BreakCommand, true);
     return 0xFF;
 }
@@ -567,4 +569,31 @@ uint8_t MOS6502::opTYA() {
     setFlag(Flag::Zero, A == 0);
     setFlag(Flag::Negative, A & 0x80);
     return A;
+}
+
+void MOS6502::interrupt(uint16_t pclAddress, uint16_t pchAddress) {
+    uint8_t PCL = PC & 0x00FF;
+    uint8_t PCH = (PC & 0xFF00) >> 8;
+    pushStack(PCH);
+    pushStack(PCL);
+    pushStack(P);
+    PCL = readMemory(pclAddress);
+    PCH = readMemory(pchAddress);
+    PC = (PCH << 8) | PCL;
+}
+
+void MOS6502::interruptNONE() {
+
+}
+
+void MOS6502::interruptNMI() {
+    setFlag(Flag::B, false);
+    interrupt(0xFFFA, 0xFFFB);
+}
+
+void MOS6502::interruptIRQ() {
+    if (!getFlag(Flag::InterruptDisable)) {
+        setFlag(Flag::B, false);
+        interrupt(0xFFFE, 0xFFFF);
+    }
 }
