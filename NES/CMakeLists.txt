@@ -21,12 +21,16 @@ set(SOURCE_FILES
         Mapper/Mapper.cpp
         Mapper/Mapper0.cpp
         MOS6502/MOS6502.cpp
-        MOS6502/execute.cpp)
+        MOS6502/execute.cpp
+        MOS6502/addressingModes.cpp
+        MOS6502/interrupts.cpp
+        MOS6502/operations.cpp)
 
 
 include_directories(bus)
 include_directories(Cartridge)
 include_directories(Mapper)
 include_directories(MOS6502)
+include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
 
 add_library(NES_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})

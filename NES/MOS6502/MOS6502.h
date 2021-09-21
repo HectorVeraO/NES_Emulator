@@ -1,6 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <sstream>
+#include <iomanip>
+#include <cmath>
+#include <optional>
+#include <memory>
+#include "spdlog/spdlog.h"
 #include "Bus.h"
 
 class MOS6502 {
@@ -17,11 +23,11 @@ public:
     };
 
     MOS6502();
+    explicit MOS6502(uint16_t const& startingPC);
     ~MOS6502();
 
     void loop();
     void clock();
-    void executeOperation();
     void connectBus(Bus* newBus);
 
     [[nodiscard]] inline uint8_t getA() const {
@@ -34,6 +40,7 @@ public:
 
     [[nodiscard]] uint8_t getFlag(uint8_t offset) const;
     void setFlag(uint8_t offset, bool turnOn);
+
 private:
     using InterruptHandler = void (MOS6502::*)();
     enum AddressingMode {
@@ -52,8 +59,8 @@ private:
         IndexedIndirect = 11,
         IndirectIndexed = 12
     };
-
     Bus* bus;
+    std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
 
     uint16_t PC;  // Program counter
     uint8_t S;    // Stack pointer
@@ -70,6 +77,7 @@ private:
     bool crossedPageBoundary{ false };
     bool isBranchTaken{ false };
     InterruptHandler irqHandler;        // Interrupt request handler (IRQ handler)
+    uint64_t totalCyclesPerformed{};
 
     AddressingMode addressingMode;
 
@@ -79,7 +87,21 @@ private:
     uint8_t pullStack();
     void pushStack(uint8_t value);
 
-    // Addressing modes
+    // TODO: Make this better? I might want to log in other formats or not log at all, anyway it's not priority.
+    void logForNESTest(std::string const& operationAlias, uint16_t startingPC, std::optional<uint8_t> maybeFirstOperand = std::nullopt, std::optional<uint8_t> maybeSecondOperand = std::nullopt) {
+        uint8_t ppuX = 0x00;
+        uint8_t ppuY = 0x00;
+        std::string firstOperand = maybeFirstOperand.has_value() ? fmt::format("{:0>2X}", maybeFirstOperand.value()) : "  ";
+        std::string secondOperand = maybeSecondOperand.has_value() ? fmt::format("{:0>2X}", maybeSecondOperand.value()) : "  ";
+        // Logging format at http://www.qmtpro.com/~nes/misc/nestest.log
+        logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", startingPC, opcode, firstOperand, secondOperand, operationAlias, opaddress, A, X, Y, P, S, ppuX, ppuY, totalCyclesPerformed);
+    }
+
+    // execute.cpp
+    void decodeOperation();
+    void executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch);
+
+    // addressingModes.cpp
     void amIMP();
     void amACC();
     void amIMM();
@@ -94,70 +116,69 @@ private:
     void amINDX();
     void amINDY();
 
-    // Interrupts
+    // interrupts.cpp
     void interrupt(uint16_t pclAddress, uint16_t pchAddress);
     void interruptNONE();
     void interruptNMI();
     void interruptIRQ();
     void interruptReset();
 
-    // Legal instructions
-    uint8_t opADC();
-    uint8_t opAND();
-    uint8_t opASL();
-    uint8_t opBCC();
-    uint8_t opBCS();
-    uint8_t opBEQ();
-    uint8_t opBIT();
-    uint8_t opBMI();
-    uint8_t opBNE();
-    uint8_t opBPL();
-    uint8_t opBRK();
-    uint8_t opBVC();
-    uint8_t opBVS();
-    uint8_t opCLC();
-    uint8_t opCLD();
-    uint8_t opCLI();
-    uint8_t opCLV();
-    uint8_t opCMP();
-    uint8_t opCPX();
-    uint8_t opCPY();
-    uint8_t opDEC();
-    uint8_t opDEX();
-    uint8_t opDEY();
-    uint8_t opEOR();
-    uint8_t opINC();
-    uint8_t opINX();
-    uint8_t opINY();
-    uint8_t opJMP();
-    uint8_t opJSR();
-    uint8_t opLDA();
-    uint8_t opLDX();
-    uint8_t opLDY();
-    uint8_t opLSR();
-    static uint8_t opNOP();
-    uint8_t opORA();
-    uint8_t opPHA();
-    uint8_t opPHP();
-    uint8_t opPLA();
-    uint8_t opPLP();
-    uint8_t opROL();
-    uint8_t opROR();
-    uint8_t opRTI();
-    uint8_t opRTS();
-    uint8_t opSBC();
-    uint8_t opSEC();
-    uint8_t opSED();
-    uint8_t opSEI();
-    uint8_t opSTA();
-    uint8_t opSTX();
-    uint8_t opSTY();
-    uint8_t opTAX();
-    uint8_t opTAY();
-    uint8_t opTSX();
-    uint8_t opTXA();
-    uint8_t opTXS();
-    uint8_t opTYA();
-
-    static void handleInstructionOperation();
+    // operations.cpp
+    void opADC();
+    void opAND();
+    void opASL();
+    void opBCC();
+    void opBCS();
+    void opBEQ();
+    void opBIT();
+    void opBMI();
+    void opBNE();
+    void opBPL();
+    void opBRK();
+    void opBVC();
+    void opBVS();
+    void opCLC();
+    void opCLD();
+    void opCLI();
+    void opCLV();
+    void opCMP();
+    void opCPX();
+    void opCPY();
+    void opDEC();
+    void opDEX();
+    void opDEY();
+    void opEOR();
+    void opINC();
+    void opINX();
+    void opINY();
+    void opJMP();
+    void opJSR();
+    void opLDA();
+    void opLDX();
+    void opLDY();
+    void opLSR();
+    void opNOP();
+    void opORA();
+    void opPHA();
+    void opPHP();
+    void opPLA();
+    void opPLP();
+    void opROL();
+    void opROR();
+    void opRTI();
+    void opRTS();
+    void opSBC();
+    void opSEC();
+    void opSED();
+    void opSEI();
+    void opSTA();
+    void opSTX();
+    void opSTY();
+    void opTAX();
+    void opTAY();
+    void opTSX();
+    void opTXA();
+    void opTXS();
+    void opTYA();
+    static void handleUnknownOperation();
 };

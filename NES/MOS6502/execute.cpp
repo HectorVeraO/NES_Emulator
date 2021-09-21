@@ -4,976 +4,685 @@
 
 #include "MOS6502.h"
 
-void MOS6502::executeOperation() {
+void MOS6502::executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch) {
+    uint16_t oldPC = PC;
+    (this->*addressingModeHandler)();
+    setFlag(Flag::B, true);
+
+    logForNESTest(operationAlias, oldPC);
+
+    (this->*operationHandler)();
+    opcycles = extraCycles + (canCrossPageBoundary ? crossedPageBoundary : 0);
+}
+
+void MOS6502::decodeOperation() {
     switch (opcode) {
         // ADC calls (add with carry)
         case 0x69: {
-            amIMM();
-            opADC();
-            opcycles += 2;
+            executeOperation("ADC", &MOS6502::amIMM, &MOS6502::opADC, 2, false, false);
             break;
         }
         case 0x65: {
-            amZP();
-            opADC();
-            opcycles += 3;
+            executeOperation("ADC", &MOS6502::amZP, &MOS6502::opADC, 3, false, false);
             break;
         }
         case 0x75: {
-            amZPX();
-            opADC();
-            opcycles += 4;
+            executeOperation("ADC", &MOS6502::amZPX, &MOS6502::opADC, 4, false, false);
             break;
         }
         case 0x6D: {
-            amABS();
-            opADC();
-            opcycles += 4;
+            executeOperation("ADC", &MOS6502::amABS, &MOS6502::opADC, 4, false, false);
             break;
         }
         case 0x7D: {
-            amABSX();
-            opADC();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("ADC", &MOS6502::amABSX, &MOS6502::opADC, 4, true, false);
             break;
         }
         case 0x79: {
-            amABSY();
-            opADC();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("ADC", &MOS6502::amABSY, &MOS6502::opADC, 4, true, false);
             break;
         }
         case 0x61: {
-            amINDX();
-            opADC();
-            opcycles += 6;
+            executeOperation("ADC", &MOS6502::amINDX, &MOS6502::opADC, 6, false, false);
             break;
         }
         case 0x71: {
-            amINDY();
-            opADC();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("ADC", &MOS6502::amINDY, &MOS6502::opADC, 5, true, false);
             break;
         }
 
         // AND calls (bitwise and)
         case 0x29: {
-            amIMM();
-            opAND();
-            opcycles += 2;
+            executeOperation("AND", &MOS6502::amIMM, &MOS6502::opAND, 2, false, false);
             break;
         }
         case 0x25: {
-            amZP();
-            opAND();
-            opcycles += 3;
+            executeOperation("AND", &MOS6502::amZP, &MOS6502::opAND, 3, false, false);
             break;
         }
         case 0x35: {
-            amZPX();
-            opAND();
-            opcycles += 4;
+            executeOperation("AND", &MOS6502::amZPX, &MOS6502::opAND, 4, false, false);
             break;
         }
         case 0x2D: {
-            amABS();
-            opAND();
-            opcycles += 4;
+            executeOperation("AND", &MOS6502::amABS, &MOS6502::opAND, 4, false, false);
             break;
         }
         case 0x3D: {
-            amABSX();
-            opAND();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("AND", &MOS6502::amABSX, &MOS6502::opAND, 4, true, false);
             break;
         }
         case 0x39: {
-            amABSY();
-            opAND();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("AND", &MOS6502::amABSY, &MOS6502::opAND, 4, true, false);
             break;
         }
         case 0x21: {
-            amINDX();
-            opAND();
-            opcycles += 6;
+            executeOperation("AND", &MOS6502::amINDX, &MOS6502::opAND, 6, false, false);
             break;
         }
         case 0x31: {
-            amINDY();
-            opAND();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("AND", &MOS6502::amINDY, &MOS6502::opAND, 5, true, false);
             break;
         }
 
         // ASL calls (arithmetic shift left)
         case 0x0A: {
-            amACC();
-            opASL();
-            opcycles += 2;
+            executeOperation("ASL", &MOS6502::amACC, &MOS6502::opASL, 2, false, false);
             break;
         }
         case 0x06: {
-            amZP();
-            opASL();
-            opcycles += 5;
+            executeOperation("ASL", &MOS6502::amZP, &MOS6502::opASL, 5, false, false);
             break;
         }
         case 0x16: {
-            amZPX();
-            opASL();
-            opcycles += 6;
+            executeOperation("ASL", &MOS6502::amZPX, &MOS6502::opASL, 6, false, false);
             break;
         }
         case 0x0E: {
-            amABS();
-            opASL();
-            opcycles += 6;
+            executeOperation("ASL", &MOS6502::amABS, &MOS6502::opASL, 6, false, false);
             break;
         }
         case 0x1E: {
-            amABSX();
-            opASL();
-            opcycles += 7;
+            executeOperation("ASL", &MOS6502::amABSX, &MOS6502::opASL, 7, false, false);
             break;
         }
 
         // BIT calls
         case 0x24: {
-            amZP();
-            opBIT();
-            opcycles += 3;
+            executeOperation("BIT", &MOS6502::amZP, &MOS6502::opBIT, 3, false, false);
             break;
         }
         case 0x2C: {
-            amABS();
-            opBIT();
-            opcycles += 4;
+            executeOperation("BIT", &MOS6502::amABS, &MOS6502::opBIT, 4, false, false);
             break;
         }
 
         // Branch calls
         case 0x10: {
-            amREL();
-            opBPL();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BPL", &MOS6502::amREL, &MOS6502::opBPL, 2, true, true);
             break;
         }
         case 0x30: {
-            amREL();
-            opBMI();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BMI", &MOS6502::amREL, &MOS6502::opBMI, 2, true, true);
             break;
         }
         case 0x50: {
-            amREL();
-            opBVC();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BVC", &MOS6502::amREL, &MOS6502::opBVC, 2, true, true);
             break;
         }
         case 0x70: {
-            amREL();
-            opBVS();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BVS", &MOS6502::amREL, &MOS6502::opBVS, 2, true, true);
             break;
         }
         case 0x90: {
-            amREL();
-            opBCC();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BCC", &MOS6502::amREL, &MOS6502::opBCC, 2, true, true);
             break;
         }
         case 0xB0: {
-            amREL();
-            opBCS();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BCS", &MOS6502::amREL, &MOS6502::opBCS, 2, true, true);
             break;
         }
         case 0xD0: {
-            amREL();
-            opBNE();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BNE", &MOS6502::amREL, &MOS6502::opBNE, 2, true, true);
             break;
         }
         case 0xF0: {
-            amREL();
-            opBEQ();
-            opcycles += 2 + isBranchTaken + crossedPageBoundary;
+            executeOperation("BEQ", &MOS6502::amREL, &MOS6502::opBEQ, 2, true, true);
             break;
         }
 
         // BRK calls (break)
         case 0x00: {
-            amIMP();
-            opBRK();
-            opcycles += 7;
+            executeOperation("BRK", &MOS6502::amIMP, &MOS6502::opBRK, 7, false, false);
             break;
         }
 
         // CMP calls (compare accumulator)
         case 0xC9: {
-            amIMM();
-            opCMP();
-            opcycles += 2;
+            executeOperation("CMP", &MOS6502::amIMM, &MOS6502::opCMP, 2, false, false);
             break;
         }
         case 0xC5: {
-            amZP();
-            opCMP();
-            opcycles += 3;
+            executeOperation("CMP", &MOS6502::amZP, &MOS6502::opCMP, 3, false, false);
             break;
         }
         case 0xD5: {
-            amZPX();
-            opCMP();
-            opcycles += 4;
+            executeOperation("CMP", &MOS6502::amZPX, &MOS6502::opCMP, 4, false, false);
             break;
         }
         case 0xCD: {
-            amABS();
-            opCMP();
-            opcycles += 4;
+            executeOperation("CMP", &MOS6502::amABS, &MOS6502::opCMP, 4, false, false);
             break;
         }
         case 0xDD: {
-            amABSX();
-            opCMP();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("CMP", &MOS6502::amABSX, &MOS6502::opCMP, 4, true, false);
             break;
         }
         case 0xD9: {
-            amABSY();
-            opCMP();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("CMP", &MOS6502::amABSY, &MOS6502::opCMP, 4, true, false);
             break;
         }
         case 0xC1: {
-            amINDX();
-            opCMP();
-            opcycles += 6;
+            executeOperation("CMP", &MOS6502::amINDX, &MOS6502::opCMP, 6, false, false);
             break;
         }
         case 0xD1: {
-            amINDY();
-            opCMP();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("CMP", &MOS6502::amINDY, &MOS6502::opCMP, 5, true, false);
             break;
         }
 
         // CPX calls (compare X register)
         case 0xE0: {
-            amIMM();
-            opCPX();
-            opcycles += 2;
+            executeOperation("CPX", &MOS6502::amIMM, &MOS6502::opCPX, 2, false, false);
             break;
         }
         case 0xE4: {
-            amZP();
-            opCPX();
-            opcycles += 3;
+            executeOperation("CPX", &MOS6502::amZP, &MOS6502::opCPX, 3, false, false);
             break;
         }
         case 0xEC: {
-            amABS();
-            opCPX();
-            opcycles += 4;
+            executeOperation("CPX", &MOS6502::amABS, &MOS6502::opCPX, 4, false, false);
             break;
         }
 
         // CPY calls (compare Y register)
         case 0xC0: {
-            amIMM();
-            opCPY();
-            opcycles += 2;
+            executeOperation("CPY", &MOS6502::amIMM, &MOS6502::opCPY, 2, false, false);
             break;
         }
         case 0xC4: {
-            amZP();
-            opCPY();
-            opcycles += 3;
+            executeOperation("CPY", &MOS6502::amZP, &MOS6502::opCPY, 3, false, false);
             break;
         }
         case 0xCC: {
-            amABS();
-            opCPY();
-            opcycles += 4;
+            executeOperation("CPY", &MOS6502::amABS, &MOS6502::opCPY, 4, false, false);
             break;
         }
 
         // DEC calls (decrement)
         case 0xC6: {
-            amZP();
-            opDEC();
-            opcycles += 5;
+            executeOperation("DEC", &MOS6502::amZP, &MOS6502::opDEC, 5, false, false);
             break;
         }
         case 0xD6: {
-            amZPX();
-            opDEC();
-            opcycles += 6;
+            executeOperation("DEC", &MOS6502::amZPX, &MOS6502::opDEC, 6, false, false);
             break;
         }
         case 0xCE: {
-            amABS();
-            opDEC();
-            opcycles += 6;
+            executeOperation("DEC", &MOS6502::amABS, &MOS6502::opDEC, 6, false, false);
             break;
         }
         case 0xDE: {
-            amABSX();
-            opDEC();
-            opcycles += 7;
+            executeOperation("DEC", &MOS6502::amABSX, &MOS6502::opDEC, 7, false, false);
             break;
         }
 
         // EOR calls (bitwise exclusive or)
         case 0x49: {
-            amIMM();
-            opEOR();
-            opcycles += 2;
+            executeOperation("EOR", &MOS6502::amIMM, &MOS6502::opEOR, 2, false, false);
             break;
         }
         case 0x45: {
-            amZP();
-            opEOR();
-            opcycles += 3;
+            executeOperation("EOR", &MOS6502::amZP, &MOS6502::opEOR, 3, false, false);
             break;
         }
         case 0x55: {
-            amZPX();
-            opEOR();
-            opcycles += 4;
+            executeOperation("EOR", &MOS6502::amZPX, &MOS6502::opEOR, 4, false, false);
             break;
         }
         case 0x4D: {
-            amABS();
-            opEOR();
-            opcycles += 4;
+            executeOperation("EOR", &MOS6502::amABS, &MOS6502::opEOR, 4, false, false);
             break;
         }
         case 0x5D: {
-            amABSX();
-            opEOR();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("EOR", &MOS6502::amABSX, &MOS6502::opEOR, 4, true, false);
             break;
         }
         case 0x59: {
-            amABSY();
-            opEOR();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("EOR", &MOS6502::amABSY, &MOS6502::opEOR, 4, true, false);
             break;
         }
         case 0x41: {
-            amINDX();
-            opEOR();
-            opcycles += 6;
+            executeOperation("EOR", &MOS6502::amINDX, &MOS6502::opEOR, 6, false, false);
             break;
         }
         case 0x51: {
-            amINDY();
-            opEOR();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("EOR", &MOS6502::amINDY, &MOS6502::opEOR, 5, true, false);
             break;
         }
 
         // Flag instructions call (processor status)
         case 0x18: {
-            amIMP();
-            opCLC();
-            opcycles += 2;
+            executeOperation("CLC", &MOS6502::amIMP, &MOS6502::opCLC, 2, false, false);
             break;
         }
         case 0x38: {
-            amIMP();
-            opSEC();
-            opcycles += 2;
+            executeOperation("SEC", &MOS6502::amIMP, &MOS6502::opSEC, 2, false, false);
             break;
         }
         case 0x58: {
-            amIMP();
-            opCLI();
-            opcycles += 2;
+            executeOperation("CLI", &MOS6502::amIMP, &MOS6502::opCLI, 2, false, false);
             break;
         }
         case 0x78: {
-            amIMP();
-            opSEI();
-            opcycles += 2;
+            executeOperation("SEI", &MOS6502::amIMP, &MOS6502::opSEI, 2, false, false);
             break;
         }
         case 0xB8: {
-            amIMP();
-            opCLV();
-            opcycles += 2;
+            executeOperation("CLV", &MOS6502::amIMP, &MOS6502::opCLV, 2, false, false);
             break;
         }
         case 0xD8: {
-            amIMP();
-            opCLD();
-            opcycles += 2;
+            executeOperation("CLD", &MOS6502::amIMP, &MOS6502::opCLD, 2, false, false);
             break;
         }
         case 0xF8: {
-            amIMP();
-            opSED();
-            opcycles += 2;
+            executeOperation("SED", &MOS6502::amIMP, &MOS6502::opSED, 2, false, false);
             break;
         }
 
         // INC calls (increment memory)
         case 0xE6: {
-            amZP();
-            opINC();
-            opcycles += 5;
+            executeOperation("INC", &MOS6502::amZP, &MOS6502::opINC, 5, false, false);
             break;
         }
         case 0xF6: {
-            amZPX();
-            opINC();
-            opcycles += 6;
+            executeOperation("INC", &MOS6502::amZPX, &MOS6502::opINC, 6, false, false);
             break;
         }
         case 0xEE: {
-            amABS();
-            opINC();
-            opcycles += 6;
+            executeOperation("INC", &MOS6502::amABS, &MOS6502::opINC, 6, false, false);
             break;
         }
         case 0xFE: {
-            amABSX();
-            opINC();
-            opcycles += 7;
+            executeOperation("INC", &MOS6502::amABSX, &MOS6502::opINC, 7, false, false);
             break;
         }
 
         // JMP calls (jump)
         case 0x4C: {
-            amABS();
-            opJMP();
-            opcycles += 3;
+            executeOperation("JMP", &MOS6502::amABS, &MOS6502::opJMP, 3, false, false);
             break;
         }
         case 0x6C: {
-            amIND();
-            opJMP();
-            opcycles += 5;
+            executeOperation("JMP", &MOS6502::amIND, &MOS6502::opJMP, 5, false, false);
             break;
         }
 
         // JSR calls (jump to subroutine)
         case 0x20: {
-            amABS();
-            opJSR();
-            opcycles += 6;
+            executeOperation("JSR", &MOS6502::amABS, &MOS6502::opJSR, 6, false, false);
             break;
         }
 
         // LDA calls (load accumulator)
         case 0xA9: {
-            amIMM();
-            opLDA();
-            opcycles += 2;
+            executeOperation("LDA", &MOS6502::amIMM, &MOS6502::opLDA, 2, false, false);
             break;
         }
         case 0xA5: {
-            amZP();
-            opLDA();
-            opcycles += 3;
+            executeOperation("LDA", &MOS6502::amZP, &MOS6502::opLDA, 3, false, false);
             break;
         }
         case 0xB5: {
-            amZPX();
-            opLDA();
-            opcycles += 4;
+            executeOperation("LDA", &MOS6502::amZPX, &MOS6502::opLDA, 4, false, false);
             break;
         }
         case 0xAD: {
-            amABS();
-            opLDA();
-            opcycles += 4;
+            executeOperation("LDA", &MOS6502::amABS, &MOS6502::opLDA, 4, false, false);
             break;
         }
         case 0xBD: {
-            amABSX();
-            opLDA();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("LDA", &MOS6502::amABSX, &MOS6502::opLDA, 4, true, false);
             break;
         }
         case 0xB9: {
-            amABSY();
-            opLDA();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("LDA", &MOS6502::amABSY, &MOS6502::opLDA, 4, true, false);
             break;
         }
         case 0xA1: {
-            amINDX();
-            opLDA();
-            opcycles += 6;
+            executeOperation("LDA", &MOS6502::amINDX, &MOS6502::opLDA, 6, false, false);
             break;
         }
         case 0xB1: {
-            amINDY();
-            opLDA();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("LDA", &MOS6502::amINDY, &MOS6502::opLDA, 5, true, false);
             break;
         }
 
         // LDX calls (load X register)
         case 0xA2: {
-            amIMM();
-            opLDX();
-            opcycles += 2;
+            executeOperation("LDX", &MOS6502::amIMM, &MOS6502::opLDX, 2, false, false);
             break;
         }
         case 0xA6: {
-            amZP();
-            opLDX();
-            opcycles += 3;
+            executeOperation("LDX", &MOS6502::amZP, &MOS6502::opLDX, 3, false, false);
             break;
         }
         case 0xB6: {
-            amZPY();
-            opLDX();
-            opcycles += 4;
+            executeOperation("LDX", &MOS6502::amZPY, &MOS6502::opLDX, 4, false, false);
             break;
         }
         case 0xAE: {
-            amABS();
-            opLDX();
-            opcycles += 4;
+            executeOperation("LDX", &MOS6502::amABS, &MOS6502::opLDX, 4, false, false);
             break;
         }
         case 0xBE: {
-            amABSY();
-            opLDX();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("LDX", &MOS6502::amABSY, &MOS6502::opLDX, 4, true, false);
             break;
         }
 
         // LDY (load Y register)
         case 0xA0: {
-            amIMM();
-            opLDY();
-            opcycles += 2;
+            executeOperation("LDY", &MOS6502::amIMM, &MOS6502::opLDY, 2, false, false);
             break;
         }
         case 0xA4: {
-            amZP();
-            opLDY();
-            opcycles += 3;
+            executeOperation("LDY", &MOS6502::amZP, &MOS6502::opLDY, 3, false, false);
             break;
         }
         case 0xB4: {
-            amZPX();
-            opLDY();
-            opcycles += 4;
+            executeOperation("LDY", &MOS6502::amZPX, &MOS6502::opLDY, 4, false, false);
             break;
         }
         case 0xAC: {
-            amABS();
-            opLDY();
-            opcycles += 4;
+            executeOperation("LDY", &MOS6502::amABS, &MOS6502::opLDY, 4, false, false);
             break;
         }
         case 0xBC: {
-            amABSX();
-            opLDY();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("LDY", &MOS6502::amABSX, &MOS6502::opLDY, 4, true, false);
             break;
         }
 
         // LSR calls (logical shift right)
         case 0x4A: {
-            amACC();
-            opLSR();
-            opcycles += 2;
+            executeOperation("LSR", &MOS6502::amACC, &MOS6502::opLSR, 2, false, false);
             break;
         }
         case 0x46: {
-            amZP();
-            opLSR();
-            opcycles += 5;
+            executeOperation("LSR", &MOS6502::amZP, &MOS6502::opLSR, 5, false, false);
             break;
         }
         case 0x56: {
-            amZPX();
-            opLSR();
-            opcycles += 6;
+            executeOperation("LSR", &MOS6502::amZPX, &MOS6502::opLSR, 6, false, false);
             break;
         }
         case 0x4E: {
-            amABS();
-            opLSR();
-            opcycles += 6;
+            executeOperation("LSR", &MOS6502::amABS, &MOS6502::opLSR, 6, false, false);
             break;
         }
         case 0x5E: {
-            amABSX();
-            opLSR();
-            opcycles += 7;
+            executeOperation("LSR", &MOS6502::amABSX, &MOS6502::opLSR, 7, false, false);
             break;
         }
 
         // NOP calls (no operation)
         case 0xEA: {
-            amIMP();
-            opNOP();
-            opcycles += 2;
+            executeOperation("NOP", &MOS6502::amIMP, &MOS6502::opNOP, 2, false, false);
             break;
         }
 
         // ORA calls (bitwise or with accumulator)
         case 0x09: {
-            amIMM();
-            opORA();
-            opcycles += 2;
+            executeOperation("ORA", &MOS6502::amIMM, &MOS6502::opORA, 2, false, false);
             break;
         }
         case 0x05: {
-            amZP();
-            opORA();
-            opcycles += 3;
+            executeOperation("ORA", &MOS6502::amZP, &MOS6502::opORA, 3, false, false);
             break;
         }
         case 0x15: {
-            amZPX();
-            opORA();
-            opcycles += 4;
+            executeOperation("ORA", &MOS6502::amZPX, &MOS6502::opORA, 4, false, false);
             break;
         }
         case 0x0D: {
-            amABS();
-            opORA();
-            opcycles += 4;
+            executeOperation("ORA", &MOS6502::amABS, &MOS6502::opORA, 4, false, false);
             break;
         }
         case 0x1D: {
-            amABSX();
-            opORA();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("ORA", &MOS6502::amABSX, &MOS6502::opORA, 4, true, false);
             break;
         }
         case 0x19: {
-            amABSY();
-            opORA();
-            opcycles +=  + crossedPageBoundary;
+            executeOperation("ORA", &MOS6502::amABSY, &MOS6502::opORA,  3, true, false);
             break;
         }
         case 0x01: {
-            amINDX();
-            opORA();
-            opcycles += 6;
+            executeOperation("ORA", &MOS6502::amINDX, &MOS6502::opORA, 6, false, false);
             break;
         }
         case 0x11: {
-            amINDY();
-            opORA();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("ORA", &MOS6502::amINDY, &MOS6502::opORA, 5, true, false);
             break;
         }
 
         // Register instructions calls
         case 0xAA: {
-            amIMP();
-            opTAX();
-            opcycles += 2;
+            executeOperation("TAX", &MOS6502::amIMP, &MOS6502::opTAX, 2, false, false);
             break;
         }
         case 0x8A: {
-            amIMP();
-            opTXA();
-            opcycles += 2;
+            executeOperation("TXA", &MOS6502::amIMP, &MOS6502::opTXA, 2, false, false);
             break;
         }
         case 0xCA: {
-            amIMP();
-            opDEX();
-            opcycles += 2;
+            executeOperation("DEX", &MOS6502::amIMP, &MOS6502::opDEX, 2, false, false);
             break;
         }
         case 0xE8: {
-            amIMP();
-            opINX();
-            opcycles += 2;
+            executeOperation("INX", &MOS6502::amIMP, &MOS6502::opINX, 2, false, false);
             break;
         }
         case 0xA8: {
-            amIMP();
-            opTAY();
-            opcycles += 2;
+            executeOperation("TAY", &MOS6502::amIMP, &MOS6502::opTAY, 2, false, false);
             break;
         }
         case 0x98: {
-            amIMP();
-            opTYA();
-            opcycles += 2;
+            executeOperation("TYA", &MOS6502::amIMP, &MOS6502::opTYA, 2, false, false);
             break;
         }
         case 0x88: {
-            amIMP();
-            opDEY();
-            opcycles += 2;
+            executeOperation("DEY", &MOS6502::amIMP, &MOS6502::opDEY, 2, false, false);
             break;
         }
         case 0xC8: {
-            amIMP();
-            opINY();
-            opcycles += 2;
+            executeOperation("INY", &MOS6502::amIMP, &MOS6502::opINY, 2, false, false);
             break;
         }
 
         // ROL calls (rotate left)
         case 0x2A: {
-            amACC();
-            opROL();
-            opcycles += 2;
+            executeOperation("ROL", &MOS6502::amACC, &MOS6502::opROL, 2, false, false);
             break;
         }
         case 0x26: {
-            amZP();
-            opROL();
-            opcycles += 5;
+            executeOperation("ROL", &MOS6502::amZP, &MOS6502::opROL, 5, false, false);
             break;
         }
         case 0x36: {
-            amZPX();
-            opROL();
-            opcycles += 6;
+            executeOperation("ROL", &MOS6502::amZPX, &MOS6502::opROL, 6, false, false);
             break;
         }
         case 0x2E: {
-            amABS();
-            opROL();
-            opcycles += 6;
+            executeOperation("ROL", &MOS6502::amABS, &MOS6502::opROL, 6, false, false);
             break;
         }
         case 0x3E: {
-            amABSX();
-            opROL();
-            opcycles += 7;
+            executeOperation("ROL", &MOS6502::amABSX, &MOS6502::opROL, 7, false, false);
             break;
         }
 
         // ROR calls (rotate right)
         case 0x6A: {
-            amACC();
-            opROR();
-            opcycles += 2;
+            executeOperation("ROR", &MOS6502::amACC, &MOS6502::opROR, 2, false, false);
             break;
         }
         case 0x66: {
-            amZP();
-            opROR();
-            opcycles += 5;
+            executeOperation("ROR", &MOS6502::amZP, &MOS6502::opROR, 5, false, false);
             break;
         }
         case 0x76: {
-            amZPX();
-            opROR();
-            opcycles += 6;
+            executeOperation("ROR", &MOS6502::amZPX, &MOS6502::opROR, 6, false, false);
             break;
         }
         case 0x6E: {
-            amABS();
-            opROR();
-            opcycles += 6;
+            executeOperation("ROR", &MOS6502::amABS, &MOS6502::opROR, 6, false, false);
             break;
         }
         case 0x7E: {
-            amABSX();
-            opROR();
-            opcycles += 7;
+            executeOperation("ROR", &MOS6502::amABSX, &MOS6502::opROR, 7, false, false);
             break;
         }
 
         // RTI calls (return from interrupt)
         case 0x40: {
-            amIMP();
-            opRTI();
-            opcycles += 6;
+            executeOperation("RTI", &MOS6502::amIMP, &MOS6502::opRTI, 6, false, false);
             break;
         }
 
         // RTS calls (return from subroutine)
         case 0x60: {
-            amIMP();
-            opRTS();
-            opcycles += 6;
+            executeOperation("RTS", &MOS6502::amIMP, &MOS6502::opRTS, 6, false, false);
             break;
         }
 
         // SBC calls (subtract with carry)
         case 0xE9: {
-            amIMM();
-            opSBC();
-            opcycles += 2;
+            executeOperation("SBC", &MOS6502::amIMM, &MOS6502::opSBC, 2, false, false);
             break;
         }
         case 0xE5: {
-            amZP();
-            opSBC();
-            opcycles += 3;
+            executeOperation("SBC", &MOS6502::amZP, &MOS6502::opSBC, 3, false, false);
             break;
         }
         case 0xF5: {
-            amZPX();
-            opSBC();
-            opcycles += 4;
+            executeOperation("SBC", &MOS6502::amZPX, &MOS6502::opSBC, 4, false, false);
             break;
         }
         case 0xED: {
-            amABS();
-            opSBC();
-            opcycles += 4;
+            executeOperation("SBC", &MOS6502::amABS, &MOS6502::opSBC, 4, false, false);
             break;
         }
         case 0xFD: {
-            amABSX();
-            opSBC();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("SBC", &MOS6502::amABSX, &MOS6502::opSBC, 4, true, false);
             break;
         }
         case 0xF9: {
-            amABSY();
-            opSBC();
-            opcycles += 4 + crossedPageBoundary;
+            executeOperation("SBC", &MOS6502::amABSY, &MOS6502::opSBC, 4, true, false);
             break;
         }
         case 0xE1: {
-            amINDX();
-            opSBC();
-            opcycles += 6;
+            executeOperation("SBC", &MOS6502::amINDX, &MOS6502::opSBC, 6, false, false);
             break;
         }
         case 0xF1: {
-            amINDY();
-            opSBC();
-            opcycles += 5 + crossedPageBoundary;
+            executeOperation("SBC", &MOS6502::amINDY, &MOS6502::opSBC, 5, true, false);
             break;
         }
 
         // STA calls (store accumulator)
         case 0x85: {
-            amZP();
-            opSTA();
-            opcycles += 3;
+            executeOperation("STA", &MOS6502::amZP, &MOS6502::opSTA, 3, false, false);
             break;
         }
         case 0x95: {
-            amZPX();
-            opSTA();
-            opcycles += 4;
+            executeOperation("STA", &MOS6502::amZPX, &MOS6502::opSTA, 4, false, false);
             break;
         }
         case 0x8D: {
-            amABS();
-            opSTA();
-            opcycles += 4;
+            executeOperation("STA", &MOS6502::amABS, &MOS6502::opSTA, 4, false, false);
             break;
         }
         case 0x9D: {
-            amABSX();
-            opSTA();
-            opcycles += 5;
+            executeOperation("STA", &MOS6502::amABSX, &MOS6502::opSTA, 5, false, false);
             break;
         }
         case 0x99: {
-            amABSY();
-            opSTA();
-            opcycles += 5;
+            executeOperation("STA", &MOS6502::amABSY, &MOS6502::opSTA, 5, false, false);
             break;
         }
         case 0x81: {
-            amINDX();
-            opSTA();
-            opcycles += 6;
+            executeOperation("STA", &MOS6502::amINDX, &MOS6502::opSTA, 6, false, false);
             break;
         }
         case 0x91: {
-            amINDY();
-            opSTA();
-            opcycles += 6;
+            executeOperation("STA", &MOS6502::amINDY, &MOS6502::opSTA, 6, false, false);
             break;
         }
 
         // Stack instructions calls
         case 0x9A: {
-            amIMP();
-            opTXS();
-            opcycles += 2;
+            executeOperation("TXS", &MOS6502::amIMP, &MOS6502::opTXS, 2, false, false);
             break;
         }
         case 0xBA: {
-            amIMP();
-            opTSX();
-            opcycles += 2;
+            executeOperation("TSX", &MOS6502::amIMP, &MOS6502::opTSX, 2, false, false);
             break;
         }
         case 0x48: {
-            amIMP();
-            opPHA();
-            opcycles += 3;
+            executeOperation("PHA", &MOS6502::amIMP, &MOS6502::opPHA, 3, false, false);
             break;
         }
         case 0x68: {
-            amIMP();
-            opPLA();
-            opcycles += 4;
+            executeOperation("PLA", &MOS6502::amIMP, &MOS6502::opPLA, 4, false, false);
             break;
         }
         case 0x08: {
-            amIMP();
-            opPHP();
-            opcycles += 3;
+            executeOperation("PHP", &MOS6502::amIMP, &MOS6502::opPHP, 3, false, false);
             break;
         }
         case 0x28: {
-            amIMP();
-            opPLP();
-            opcycles += 4;
+            executeOperation("PLP", &MOS6502::amIMP, &MOS6502::opPLP, 4, false, false);
             break;
         }
 
         // STX calls (store X register)
         case 0x86: {
-            amZP();
-            opSTX();
-            opcycles += 3;
+            executeOperation("STX", &MOS6502::amZP, &MOS6502::opSTX, 3, false, false);
             break;
         }
         case 0x96: {
-            amZPY();
-            opSTX();
-            opcycles += 4;
+            executeOperation("STX", &MOS6502::amZPY, &MOS6502::opSTX, 4, false, false);
             break;
         }
         case 0x8E: {
-            amABS();
-            opSTX();
-            opcycles += 4;
+            executeOperation("STX", &MOS6502::amABS, &MOS6502::opSTX, 4, false, false);
             break;
         }
 
         // STY calls (store Y register)
         case 0x84: {
-            amZP();
-            opSTY();
-            opcycles += 3;
+            executeOperation("STY", &MOS6502::amZP, &MOS6502::opSTY, 3, false, false);
             break;
         }
         case 0x94: {
-            amZPX();
-            opSTY();
-            opcycles += 4;
+            executeOperation("STY", &MOS6502::amZPX, &MOS6502::opSTY, 4, false, false);
             break;
         }
         case 0x8C: {
-            amABS();
-            opSTY();
-            opcycles += 4;
+            executeOperation("STY", &MOS6502::amABS, &MOS6502::opSTY, 4, false, false);
             break;
         }
 
-        default: handleInstructionOperation();
+        default: handleUnknownOperation();
     }
 }

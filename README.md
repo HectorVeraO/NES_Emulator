@@ -6,7 +6,7 @@ Build a working NES emulator with readable code, though I'm still far from both 
 
 ## TODOs
 1. MOS6502 class: Add test cases for the addressing modes.
-2. MOS6502 class: Add interrupts. 
+2. MOS6502 class: Add test cases for interrupts. 
 3. MOS6502 class: Improve MOS6502 class (fetch - decode - execute loop, encapsulation and inlined todos).
 4. Add PPU.
 5. Add input devices.
