@@ -36,50 +36,59 @@ void MOS6502::opAND() {
 
 void MOS6502::opASL() {
     setFlag(Flag::Carry, opvalue & 0x80);
-    A = opvalue << 1;
-    setFlag(Flag::Zero, A == 0);
-    setFlag(Flag::Negative, A & 0x80);
+    opvalue = opvalue << 1;
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);
+    if (addressingMode == AddressingMode::Accumulator)
+        A = opvalue;
+    else
+        writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opBCC() {
     isBranchTaken = getFlag(Flag::Carry) == 0;
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBCS() {
     isBranchTaken = getFlag(Flag::Carry);
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBEQ() {
     isBranchTaken = getFlag(Flag::Zero);
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBIT() {
-    uint8_t nonAccumulatedResult = A & opvalue;
-    setFlag(Flag::Zero, nonAccumulatedResult == 0);
-    setFlag(Flag::Overflow, nonAccumulatedResult & 0x40);
-    setFlag(Flag::Negative, nonAccumulatedResult & 0x80);
+    setFlag(Flag::Zero, (opvalue & A) == 0);
+    setFlag(Flag::Overflow, opvalue & 0x40);
+    setFlag(Flag::Negative, opvalue & 0x80);
 }
 
 void MOS6502::opBMI() {
     isBranchTaken = getFlag(Flag::Negative);
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBNE() {
     isBranchTaken = getFlag(Flag::Zero) == 0;
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBPL() {
     isBranchTaken = getFlag(Flag::Negative) == 0;
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
@@ -92,12 +101,14 @@ void MOS6502::opBRK() {
 
 void MOS6502::opBVC() {
     isBranchTaken = getFlag(Flag::Overflow) == 0;
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
 
 void MOS6502::opBVS() {
     isBranchTaken = getFlag(Flag::Overflow);
+    crossedPageBoundary = crossedPageBoundary && isBranchTaken;
     if (isBranchTaken)
         PC = opaddress;
 }
@@ -140,10 +151,10 @@ void MOS6502::opCPY() {
 }
 
 void MOS6502::opDEC() {
-    uint8_t result = opvalue - 1;
-    setFlag(Flag::Zero, result == 0);
-    setFlag(Flag::Negative, result & 0x80);
-    writeMemory(opaddress, result);
+    opvalue = opvalue - 1;
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);
+    writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opDEX() {
@@ -165,10 +176,10 @@ void MOS6502::opEOR() {
 }
 
 void MOS6502::opINC() {
-    uint8_t result = opvalue + 1;
-    setFlag(Flag::Zero, result == 0);
-    setFlag(Flag::Negative, result & 0x80);
-    writeMemory(opaddress, result);
+    opvalue = opvalue + 1;
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);
+    writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opINX() {
@@ -188,8 +199,9 @@ void MOS6502::opJMP() {
 }
 
 void MOS6502::opJSR() {
-    pushStack((PC & 0xFF00) >> 8);
-    pushStack(PC & 0x00FF);
+    uint16_t previousPC = PC - 1;
+    pushStack((previousPC & 0xFF00) >> 8);
+    pushStack(previousPC & 0x00FF);
     PC = opaddress;
 }
 
@@ -213,9 +225,13 @@ void MOS6502::opLDY() {
 
 void MOS6502::opLSR() {
     setFlag(Flag::Carry, opvalue & 0x01);
-    A = opvalue >> 1;
-    setFlag(Flag::Zero, A == 0);
-    setFlag(Flag::Negative, A & 0x80);    // Can this be true?
+    opvalue = opvalue >> 1;
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);    // Can this be true?
+    if (addressingMode == AddressingMode::Accumulator)
+        A = opvalue;
+    else
+        writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opNOP() {
@@ -247,18 +263,27 @@ void MOS6502::opPLP() {
 
 void MOS6502::opROL() {
     bool hasCarry = opvalue & 0x80;
-    A = (opvalue << 1) | getFlag(Flag::Carry);
+    opvalue = (opvalue << 1) | getFlag(Flag::Carry);
     setFlag(Flag::Carry, hasCarry);
-    setFlag(Flag::Zero, A == 0);
-    setFlag(Flag::Negative, A & 0x80);
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);
+    if (addressingMode == AddressingMode::Accumulator)
+        A = opvalue;
+    else
+        writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opROR() {
     bool hasCarry = opvalue & 0x01;
-    A = (opvalue >> 1) | getFlag(Flag::Carry);
+    uint8_t previousCarry = getFlag(Flag::Carry) ? 1 : 0;
+    opvalue = (opvalue >> 1) | (previousCarry << 7);
     setFlag(Flag::Carry, hasCarry);
-    setFlag(Flag::Zero, A == 0);
-    setFlag(Flag::Negative, A & 0x80);
+    setFlag(Flag::Zero, opvalue == 0);
+    setFlag(Flag::Negative, opvalue & 0x80);
+    if (addressingMode == AddressingMode::Accumulator)
+        A = opvalue;
+    else
+        writeMemory(opaddress, opvalue);
 }
 
 void MOS6502::opRTI() {
@@ -271,7 +296,7 @@ void MOS6502::opRTI() {
 void MOS6502::opRTS() {
     uint8_t PCL = pullStack();
     uint8_t PCH = pullStack();
-    PC = (PCH << 8) | PCL;
+    PC = ((PCH << 8) | PCL) + 1;    // It pulls the PC minus 1, see JSR
 }
 
 void MOS6502::opSBC() {

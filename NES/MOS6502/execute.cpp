@@ -12,7 +12,7 @@ void MOS6502::executeOperation(std::string const& operationAlias, InterruptHandl
     logForNESTest(operationAlias, oldPC);
 
     (this->*operationHandler)();
-    opcycles = extraCycles + (canCrossPageBoundary ? crossedPageBoundary : 0);
+    opcycles = extraCycles + (canCrossPageBoundary && crossedPageBoundary) + (canBranch && isBranchTaken);
 }
 
 void MOS6502::decodeOperation() {
