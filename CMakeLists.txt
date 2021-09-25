@@ -25,6 +25,7 @@ FetchContent_MakeAvailable(spdlog)
 include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
 
 add_executable(WDNES main.cpp)
+target_compile_definitions(NES_lib PRIVATE DISABLE_6502_BUGS=0)
 target_link_libraries(WDNES PRIVATE NES_lib)
 target_link_libraries(WDNES PRIVATE spdlog)
 

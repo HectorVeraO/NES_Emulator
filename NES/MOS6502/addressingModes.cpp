@@ -51,7 +51,12 @@ void MOS6502::amIND() {
     uint8_t operandHighByte = readMemory(PC++);
     uint16_t operand = (operandHighByte << 8) | operandLowByte;
     uint8_t effectiveAddressLowByte = readMemory(operand);
+
+#if DISABLE_6502_BUGS
     uint8_t effectiveAddressHighByte = readMemory(operand + 1);
+#else
+    uint8_t effectiveAddressHighByte = readMemory((operandHighByte << 8) | ((operandLowByte + 1) & 0x00FF));
+#endif
     opaddress = (effectiveAddressHighByte << 8) | effectiveAddressLowByte;
     opvalue = readMemory(opaddress);
 }
@@ -105,7 +110,7 @@ void MOS6502::amINDY() {
     uint16_t sum = readMemory(0x0000 | operand) + Y;
     bool hasCarry = sum > 0xFF;
     uint8_t effectiveAddressLowByte = sum & 0x00FF;
-    uint8_t effectiveAddressHighByte = readMemory(0x0000 | (operand + 1)) + hasCarry;
+    uint8_t effectiveAddressHighByte = readMemory(0x00FF & (operand + 1)) + hasCarry;
     opaddress = (effectiveAddressHighByte << 8) | effectiveAddressLowByte;
     opvalue = readMemory(opaddress);
     crossedPageBoundary = hasCarry;

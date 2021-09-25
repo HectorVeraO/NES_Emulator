@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef DISABLE_6502_BUGS
+#define DISABLE_6502_BUGS 0
+#endif
+
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
