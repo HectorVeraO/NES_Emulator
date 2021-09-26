@@ -104,6 +104,8 @@ private:
     // execute.cpp
     void decodeOperation();
     void executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch);
+    void handleIllegalOperation();
+    void handleUnknownOperation() const;
 
     // addressingModes.cpp
     void amIMP();
@@ -121,13 +123,13 @@ private:
     void amINDY();
 
     // interrupts.cpp
-    void interrupt(uint16_t pclAddress, uint16_t pchAddress);
+    void interrupt(uint16_t pclAddress, uint16_t pchAddress, uint8_t preservedP);
     void interruptNONE();
     void interruptNMI();
     void interruptIRQ();
     void interruptReset();
 
-    // operations.cpp
+    // operations.cpp "legal" operations
     void opADC();
     void opAND();
     void opASL();
@@ -184,5 +186,14 @@ private:
     void opTXA();
     void opTXS();
     void opTYA();
-    static void handleUnknownOperation();
+
+    // operations.cpp "legal" operations
+    void opLAX();
+    void opSAX();
+    void opDCP();
+    void opISB();
+    void opSLO();
+    void opRLA();
+    void opSRE();
+    void opRRA();
 };

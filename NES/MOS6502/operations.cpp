@@ -95,7 +95,10 @@ void MOS6502::opBPL() {
 
 void MOS6502::opBRK() {
     PC++;
-    interrupt(0xFFFE, 0xFFFF);
+    uint8_t preservedP = P;
+    preservedP |= (1 << 4);
+    preservedP |= (1 << 5);
+    interrupt(0xFFFE, 0xFFFF, preservedP);
     setFlag(Flag::BreakCommand, true);
 }
 
@@ -248,7 +251,10 @@ void MOS6502::opPHA() {
 }
 
 void MOS6502::opPHP() {
-    pushStack(P);
+    uint8_t pushP = P;
+    pushP |= (1 << 4);
+    pushP |= (1 << 5);
+    pushStack(pushP);
 }
 
 void MOS6502::opPLA() {
@@ -257,8 +263,11 @@ void MOS6502::opPLA() {
     setFlag(Flag::Negative, A & 0x80);
 }
 
+// FIXME: This is so hackish I don't like it, think of a better way to handle flags BreakCommand and B (bit 4 and 5)
 void MOS6502::opPLP() {
-    P = pullStack();
+    uint8_t newP = pullStack();
+    newP &= ~(1 << 4);  // The NES CPU doesn't have storage for the bit 4 (BreakCommand flag, it's only generated when pushing)
+    P = newP;
 }
 
 void MOS6502::opROL() {
@@ -362,6 +371,41 @@ void MOS6502::opTYA() {
     setFlag(Flag::Negative, A & 0x80);
 }
 
-void MOS6502::handleUnknownOperation() {
-    //std::cout << "Operation not implemented\n";
+void MOS6502::opLAX() {
+    opLDA();
+    opLDX();
+}
+
+void MOS6502::opSAX() {
+    writeMemory(opaddress, X & A);
+}
+
+void MOS6502::opDCP() {
+    opDEC();
+    opCMP();
+}
+
+void MOS6502::opISB() {
+    opINC();
+    opSBC();
+}
+
+void MOS6502::opSLO() {
+    opASL();
+    opORA();
+}
+
+void MOS6502::opRLA() {
+    opROL();
+    opAND();
+}
+
+void MOS6502::opSRE() {
+    opLSR();
+    opEOR();
+}
+
+void MOS6502::opRRA() {
+    opROR();
+    opADC();
 }

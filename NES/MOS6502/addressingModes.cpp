@@ -39,10 +39,11 @@ void MOS6502::amABS() {
 
 void MOS6502::amREL() {
     addressingMode = AddressingMode::Relative;
-    uint8_t offset = readMemory(PC++);
+    uint16_t offset = readMemory(PC++);
+    offset = offset & 0x80 ? (0xFF00 | offset) : (0x0000 | offset); // Extend sign from an 8-bit integer to 16-bit integer, I think casting the offset to int8_t might also work
     opaddress = PC + offset;
-    opvalue = opaddress;
     crossedPageBoundary = (opaddress & 0xFF00) != (PC & 0xFF00);
+    opvalue = opaddress;
 }
 
 void MOS6502::amIND() {
@@ -81,7 +82,7 @@ void MOS6502::amABSX() {
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + X;
     opvalue = readMemory(opaddress);
-    crossedPageBoundary = X > (lowByte + X);
+    crossedPageBoundary = highByte != (opaddress & 0xFF00);
 }
 
 void MOS6502::amABSY() {
@@ -90,7 +91,7 @@ void MOS6502::amABSY() {
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + Y;
     opvalue = readMemory(opaddress);
-    crossedPageBoundary = Y > (lowByte + Y);
+    crossedPageBoundary = highByte != (opaddress & 0xFF00);
 }
 
 void MOS6502::amINDX() {

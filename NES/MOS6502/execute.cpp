@@ -5,14 +5,18 @@
 #include "MOS6502.h"
 
 void MOS6502::executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch) {
-    uint16_t oldPC = PC;
+    uint16_t previousPC = PC - 1;
     (this->*addressingModeHandler)();
-    setFlag(Flag::B, true);
 
-    logForNESTest(operationAlias, oldPC);
+    logForNESTest(operationAlias, previousPC);
 
     (this->*operationHandler)();
+    setFlag(Flag::B, true);
     opcycles = extraCycles + (canCrossPageBoundary && crossedPageBoundary) + (canBranch && isBranchTaken);
+}
+
+void MOS6502::handleUnknownOperation() const {
+    logger->warn("The opcode {:0>2X} is not recognized, interpreting next byte as opcode", opcode);
 }
 
 void MOS6502::decodeOperation() {
@@ -463,7 +467,7 @@ void MOS6502::decodeOperation() {
             break;
         }
         case 0x19: {
-            executeOperation("ORA", &MOS6502::amABSY, &MOS6502::opORA,  3, true, false);
+            executeOperation("ORA", &MOS6502::amABSY, &MOS6502::opORA,  4, true, false);
             break;
         }
         case 0x01: {
@@ -683,6 +687,269 @@ void MOS6502::decodeOperation() {
             break;
         }
 
+        default: handleIllegalOperation();
+    }
+}
+
+void MOS6502::handleIllegalOperation() {
+    switch (opcode) {
+        case 0x04:
+        case 0x44:
+        case 0x64: {
+            executeOperation("NOP", &MOS6502::amZP, &MOS6502::opNOP, 3, false, false);
+            break;
+        }
+        case 0x0C: {
+            executeOperation("NOP", &MOS6502::amABS, &MOS6502::opNOP, 4, false, false);
+            break;
+        }
+        case 0x14:
+        case 0x34:
+        case 0x54:
+        case 0x74:
+        case 0xD4:
+        case 0xF4: {
+            executeOperation("NOP", &MOS6502::amZPX, &MOS6502::opNOP, 4, false, false);
+            break;
+        }
+        case 0x1A:
+        case 0x3A:
+        case 0x5A:
+        case 0x7A:
+        case 0xDA:
+        case 0xFA: {
+            executeOperation("NOP", &MOS6502::amIMP, &MOS6502::opNOP, 2, false, false);
+            break;
+        }
+        case 0x80:
+        case 0x82:
+        case 0x89:
+        case 0xC2:
+        case 0xE2: {
+            executeOperation("NOP", &MOS6502::amIMM, &MOS6502::opNOP, 2, false, false);
+            break;
+        }
+        case 0x1C:
+        case 0x3C:
+        case 0x5C:
+        case 0x7C:
+        case 0xDC:
+        case 0xFC: {
+            executeOperation("NOP", &MOS6502::amABSX, &MOS6502::opNOP, 4, true, false);
+            break;
+        }
+        case 0xA3: {
+            executeOperation("LAX", &MOS6502::amINDX, &MOS6502::opLAX, 6, false, false);
+            break;
+        }
+        case 0xA7: {
+            executeOperation("LAX", &MOS6502::amZP, &MOS6502::opLAX, 3, false, false);
+            break;
+        }
+        case 0xAF: {
+            executeOperation("LAX", &MOS6502::amABS, &MOS6502::opLAX, 4, false, false);
+            break;
+        }
+        case 0xB3: {
+            executeOperation("LAX", &MOS6502::amINDY, &MOS6502::opLAX, 5, true, false);
+            break;
+        }
+        case 0xB7: {
+            executeOperation("LAX", &MOS6502::amZPY, &MOS6502::opLAX, 4, false, false);
+            break;
+        }
+        case 0xBF: {
+            executeOperation("LAX", &MOS6502::amABSY, &MOS6502::opLAX, 4, true, false);
+            break;
+        }
+        case 0x83: {
+            executeOperation("SAX", &MOS6502::amINDX, &MOS6502::opSAX, 6, false, false);
+            break;
+        }
+        case 0x87: {
+            executeOperation("SAX", &MOS6502::amZP, &MOS6502::opSAX, 3, false, false);
+            break;
+        }
+        case 0x8F: {
+            executeOperation("SAX", &MOS6502::amABS, &MOS6502::opSAX, 4, false, false);
+            break;
+        }
+        case 0x97: {
+            executeOperation("SAX", &MOS6502::amZPY, &MOS6502::opSAX, 4, false, false);
+            break;
+        }
+        case 0xEB: {
+            executeOperation("SBC", &MOS6502::amIMM, &MOS6502::opSBC, 2, false, false); // It's the same as the "legal" opcode $E9
+            break;
+        }
+        case 0xC3: {
+            executeOperation("DCP", &MOS6502::amINDX, &MOS6502::opDCP, 8, false, false);
+            break;
+        }
+        case 0xC7: {
+            executeOperation("DCP", &MOS6502::amZP, &MOS6502::opDCP, 5, false, false);
+            break;
+        }
+        case 0xCF: {
+            executeOperation("DCP", &MOS6502::amABS, &MOS6502::opDCP, 6, false, false);
+            break;
+        }
+        case 0xD3: {
+            executeOperation("DCP", &MOS6502::amINDY, &MOS6502::opDCP, 8, false, false);
+            break;
+        }
+        case 0xD7: {
+            executeOperation("DCP", &MOS6502::amZPX, &MOS6502::opDCP, 6, false, false);
+            break;
+        }
+        case 0xDB: {
+            executeOperation("DCP", &MOS6502::amABSY, &MOS6502::opDCP, 7, false, false);
+            break;
+        }
+        case 0xDF: {
+            executeOperation("DCP", &MOS6502::amABSX, &MOS6502::opDCP, 7, false, false);
+            break;
+        }
+        case 0xE3: {
+            executeOperation("ISB", &MOS6502::amINDX, &MOS6502::opISB, 8, false, false);
+            break;
+        }
+        case 0xE7: {
+            executeOperation("ISB", &MOS6502::amZP, &MOS6502::opISB, 5, false, false);
+            break;
+        }
+        case 0xEF: {
+            executeOperation("ISB", &MOS6502::amABS, &MOS6502::opISB, 6, false, false);
+            break;
+        }
+        case 0xF3: {
+            executeOperation("ISB", &MOS6502::amINDY, &MOS6502::opISB, 8, false, false);
+            break;
+        }
+        case 0xF7: {
+            executeOperation("ISB", &MOS6502::amZPX, &MOS6502::opISB, 6, false, false);
+            break;
+        }
+        case 0xFB: {
+            executeOperation("ISB", &MOS6502::amABSY, &MOS6502::opISB, 7, false, false);
+            break;
+        }
+        case 0xFF: {
+            executeOperation("ISB", &MOS6502::amABSX, &MOS6502::opISB, 7, false, false);
+            break;
+        }
+        case 0x03: {
+            executeOperation("SLO", &MOS6502::amINDX, &MOS6502::opSLO, 8, false, false);
+            break;
+        }
+        case 0x07: {
+            executeOperation("SLO", &MOS6502::amZP, &MOS6502::opSLO, 5, false, false);
+            break;
+        }
+        case 0x0F: {
+            executeOperation("SLO", &MOS6502::amABS, &MOS6502::opSLO, 6, false, false);
+            break;
+        }
+        case 0x13: {
+            executeOperation("SLO", &MOS6502::amINDY, &MOS6502::opSLO, 8, false, false);
+            break;
+        }
+        case 0x17: {
+            executeOperation("SLO", &MOS6502::amZPX, &MOS6502::opSLO, 6, false, false);
+            break;
+        }
+        case 0x1B: {
+            executeOperation("SLO", &MOS6502::amABSY, &MOS6502::opSLO, 7, false, false);
+            break;
+        }
+        case 0x1F: {
+            executeOperation("SLO", &MOS6502::amABSX, &MOS6502::opSLO, 7, false, false);
+            break;
+        }
+        case 0x23: {
+            executeOperation("RLA", &MOS6502::amINDX, &MOS6502::opRLA, 8, false, false);
+            break;
+        }
+        case 0x27: {
+            executeOperation("RLA", &MOS6502::amZP, &MOS6502::opRLA, 5, false, false);
+            break;
+        }
+        case 0x2F: {
+            executeOperation("RLA", &MOS6502::amABS, &MOS6502::opRLA, 6, false, false);
+            break;
+        }
+        case 0x33: {
+            executeOperation("RLA", &MOS6502::amINDY, &MOS6502::opRLA, 8, false, false);
+            break;
+        }
+        case 0x37: {
+            executeOperation("RLA", &MOS6502::amZPX, &MOS6502::opRLA, 6, false, false);
+            break;
+        }
+        case 0x3B: {
+            executeOperation("RLA", &MOS6502::amABSY, &MOS6502::opRLA, 7, false, false);
+            break;
+        }
+        case 0x3F: {
+            executeOperation("RLA", &MOS6502::amABSX, &MOS6502::opRLA, 7, false, false);
+            break;
+        }
+        case 0x43: {
+            executeOperation("SRE", &MOS6502::amINDX, &MOS6502::opSRE, 8, false, false);
+            break;
+        }
+        case 0x47: {
+            executeOperation("SRE", &MOS6502::amZP, &MOS6502::opSRE, 5, false, false);
+            break;
+        }
+        case 0x4F: {
+            executeOperation("SRE", &MOS6502::amABS, &MOS6502::opSRE, 6, false, false);
+            break;
+        }
+        case 0x53: {
+            executeOperation("SRE", &MOS6502::amINDY, &MOS6502::opSRE, 8, false, false);
+            break;
+        }
+        case 0x57: {
+            executeOperation("SRE", &MOS6502::amZPX, &MOS6502::opSRE, 6, false, false);
+            break;
+        }
+        case 0x5B: {
+            executeOperation("SRE", &MOS6502::amABSY, &MOS6502::opSRE, 7, false, false);
+            break;
+        }
+        case 0x5F: {
+            executeOperation("SRE", &MOS6502::amABSX, &MOS6502::opSRE, 7, false, false);
+            break;
+        }
+        case 0x63: {
+            executeOperation("RRA", &MOS6502::amINDX, &MOS6502::opRRA, 8, false, false);
+            break;
+        }
+        case 0x67: {
+            executeOperation("RRA", &MOS6502::amZP, &MOS6502::opRRA, 5, false, false);
+            break;
+        }
+        case 0x6F: {
+            executeOperation("RRA", &MOS6502::amABS, &MOS6502::opRRA, 6, false, false);
+            break;
+        }
+        case 0x73: {
+            executeOperation("RRA", &MOS6502::amINDY, &MOS6502::opRRA, 8, false, false);
+            break;
+        }
+        case 0x77: {
+            executeOperation("RRA", &MOS6502::amZPX, &MOS6502::opRRA, 6, false, false);
+            break;
+        }
+        case 0x7B: {
+            executeOperation("RRA", &MOS6502::amABSY, &MOS6502::opRRA, 7, false, false);
+            break;
+        }
+        case 0x7F: {
+            executeOperation("RRA", &MOS6502::amABSX, &MOS6502::opRRA, 7, false, false);
+            break;
+        }
         default: handleUnknownOperation();
     }
 }
