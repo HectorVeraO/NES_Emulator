@@ -46,7 +46,7 @@ public:
     void setFlag(uint8_t offset, bool turnOn);
 
 private:
-    using InterruptHandler = void (MOS6502::*)();
+    using VoidHandler = void (MOS6502::*)();
     enum AddressingMode {
         None = -1,
         Implicit = 0,
@@ -80,7 +80,7 @@ private:
     uint8_t opcycles{};
     bool crossedPageBoundary{ false };
     bool isBranchTaken{ false };
-    InterruptHandler irqHandler;        // Interrupt request handler (IRQ handler)
+    VoidHandler irqHandler;             // Interrupt request handler (IRQ handler)
     uint64_t totalCyclesPerformed{};
 
     AddressingMode addressingMode;
@@ -103,7 +103,7 @@ private:
 
     // execute.cpp
     void decodeOperation();
-    void executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch);
+    void executeOperation(std::string const& operationAlias, VoidHandler addressingModeHandler, VoidHandler operationHandler, uint8_t baseCycles, bool canCrossPageBoundary, bool canBranch);
     void handleIllegalOperation();
     void handleUnknownOperation() const;
 

@@ -4,7 +4,7 @@
 
 #include "MOS6502.h"
 
-void MOS6502::executeOperation(std::string const& operationAlias, InterruptHandler addressingModeHandler, InterruptHandler operationHandler, uint8_t extraCycles, bool canCrossPageBoundary, bool canBranch) {
+void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler addressingModeHandler, VoidHandler operationHandler, uint8_t baseCycles, bool canCrossPageBoundary, bool canBranch) {
     uint16_t previousPC = PC - 1;
     (this->*addressingModeHandler)();
 
@@ -12,7 +12,7 @@ void MOS6502::executeOperation(std::string const& operationAlias, InterruptHandl
 
     (this->*operationHandler)();
     setFlag(Flag::B, true);
-    opcycles = extraCycles + (canCrossPageBoundary && crossedPageBoundary) + (canBranch && isBranchTaken);
+    opcycles = baseCycles + (canCrossPageBoundary && crossedPageBoundary) + (canBranch && isBranchTaken);
 }
 
 void MOS6502::handleUnknownOperation() const {
@@ -467,7 +467,7 @@ void MOS6502::decodeOperation() {
             break;
         }
         case 0x19: {
-            executeOperation("ORA", &MOS6502::amABSY, &MOS6502::opORA,  4, true, false);
+            executeOperation("ORA", &MOS6502::amABSY, &MOS6502::opORA, 4, true, false);
             break;
         }
         case 0x01: {

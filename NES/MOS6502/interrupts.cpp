@@ -22,7 +22,7 @@ void MOS6502::interruptNONE() {
 
 void MOS6502::interruptNMI() {
     uint8_t preservedP = P;
-    preservedP |= ~ (1 << 4);
+    preservedP |= ~(1 << 4);
     preservedP |= (1 << 5);
     setFlag(Flag::B, false);
     interrupt(0xFFFA, 0xFFFB, preservedP);
@@ -31,7 +31,7 @@ void MOS6502::interruptNMI() {
 void MOS6502::interruptIRQ() {
     if (!getFlag(Flag::InterruptDisable)) {
         uint8_t preservedP = P;
-        preservedP &= ~ (1 << 4);
+        preservedP &= ~(1 << 4);
         preservedP |= (1 << 5);
         setFlag(Flag::B, false);
         interrupt(0xFFFE, 0xFFFF, preservedP);
@@ -41,7 +41,7 @@ void MOS6502::interruptIRQ() {
 void MOS6502::interruptReset() {
     uint16_t oldPC = PC;
     uint8_t preservedP = P;
-    preservedP &= ~ (1 << 4);
+    preservedP &= ~(1 << 4);
     preservedP |= (1 << 5);
     interrupt(0xFFFC, 0xFFFD, preservedP);
     PC = oldPC;

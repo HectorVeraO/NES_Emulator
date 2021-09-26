@@ -39,7 +39,7 @@ private:
         Horizontal = 2
     };
 
-    Mapper *mapper;
+    Mapper* mapper;
     MirroringType mirroringType;
     bool hasBatteryBackedRAM;
     bool useFourScreenMirroring;

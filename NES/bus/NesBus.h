@@ -21,7 +21,7 @@ public:
     void writeMemory(uint16_t address, uint8_t value) override;
 
 private:
-    Cartridge *cartridge;
+    Cartridge* cartridge;
 
     std::array<uint8_t, 0x0800> ram{};
     std::array<uint8_t, 0x0028> ioRegisters{};

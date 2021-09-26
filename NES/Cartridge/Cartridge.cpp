@@ -3,11 +3,9 @@
 //
 
 #include "Cartridge.h"
+#include "Mapper0.h"
 
-#include <utility>
-#include "../Mapper/Mapper0.h"
-
-Cartridge::Cartridge(std::string  sfilepath) : filepath(std::move(sfilepath)) {
+Cartridge::Cartridge(std::string sfilepath) : filepath(std::move(sfilepath)) {
     std::ifstream romifs(filepath, std::ios::binary);
     if (romifs.is_open()) {
         romifs.read(reinterpret_cast<char*>(&header), sizeof header);

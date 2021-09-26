@@ -13,7 +13,7 @@ MOS6502::MOS6502() {
     on = true;
     irqHandler = &MOS6502::interruptNONE;
     totalCyclesPerformed = 0;
-    setFlag(Flag::B,  true);
+    setFlag(Flag::B, true);
 }
 
 MOS6502::MOS6502(uint16_t const& startingPC) {
@@ -29,7 +29,7 @@ MOS6502::MOS6502(uint16_t const& startingPC) {
     on = true;
     irqHandler = &MOS6502::interruptNONE;
     totalCyclesPerformed = 0;
-    setFlag(Flag::B,  true);
+    setFlag(Flag::B, true);
 }
 
 MOS6502::~MOS6502() = default;
