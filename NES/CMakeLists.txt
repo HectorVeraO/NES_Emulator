@@ -2,7 +2,8 @@ set(HEADER_DIRS
         bus
         Cartridge
         Mapper
-        MOS6502)
+        MOS6502
+        NTSC2C02)
 
 set(HEADER_FILES
         bus/Bus.h
@@ -11,7 +12,8 @@ set(HEADER_FILES
         Cartridge/Cartridge.h
         Mapper/Mapper.h
         Mapper/Mapper0.h
-        MOS6502/MOS6502.h)
+        MOS6502/MOS6502.h
+        NTSC2C02/NTSC2C02.h)
 
 set(SOURCE_FILES
         bus/Bus.cpp
@@ -24,13 +26,16 @@ set(SOURCE_FILES
         MOS6502/execute.cpp
         MOS6502/addressingModes.cpp
         MOS6502/interrupts.cpp
-        MOS6502/operations.cpp)
+        MOS6502/operations.cpp
+        NTSC2C02/NTSC2C02.cpp
+        NTSC2C02/memory.cpp)
 
 
 include_directories(bus)
 include_directories(Cartridge)
 include_directories(Mapper)
 include_directories(MOS6502)
+include_directories(NTSC2C02)
 include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
 
 add_library(NES_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})

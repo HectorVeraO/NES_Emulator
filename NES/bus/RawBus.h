@@ -12,11 +12,14 @@ public:
     explicit RawBus(std::vector<uint8_t> rom);
     ~RawBus() override;
 
-    [[nodiscard]] uint8_t readMemory(uint16_t address) const override;
-    void writeMemory(uint16_t address, uint8_t value) override;
+    [[nodiscard]] uint8_t readCPUMemory(uint16_t address) const override;
+    void writeCPUMemory(uint16_t address, uint8_t value) override;
 
+    [[nodiscard]] uint8_t readPPUMemory(uint16_t address) const override;
+    void writePPUMemory(uint16_t address, uint8_t value) override;
 private:
-    std::vector<uint8_t> memory;
+    std::vector<uint8_t> cpuMemory;
+    std::vector<uint8_t> ppuMemory;
 };
 
 

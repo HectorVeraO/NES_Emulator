@@ -187,7 +187,7 @@ private:
     void opTXS();
     void opTYA();
 
-    // operations.cpp "legal" operations
+    // operations.cpp "illegal" operations
     void opLAX();
     void opSAX();
     void opDCP();
