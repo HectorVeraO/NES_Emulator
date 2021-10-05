@@ -15,12 +15,12 @@
 class Cartridge {
 public:
     explicit Cartridge(std::string sfilepath);
-
     virtual ~Cartridge();
 
-    [[nodiscard]] uint8_t readMemory(uint16_t address) const;
-
-    void writeMemory(uint16_t address, uint8_t value);
+    [[nodiscard]] uint8_t readPRGMemory(uint16_t address) const;
+    void writePRGMemory(uint16_t address, uint8_t value);
+    [[nodiscard]] uint8_t readCHRMemory(uint16_t address) const;
+    void writeCHRMemory(uint16_t address, uint8_t value);
 
 private:
     struct INESHeader {

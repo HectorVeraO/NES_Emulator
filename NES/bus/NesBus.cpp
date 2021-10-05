@@ -34,7 +34,7 @@ uint8_t NesBus::readCPUMemory(uint16_t address) const {
     if (address < 0x8000)
         return sram[address % 0x2000];
 
-    return cartridge->readMemory(address);
+    return cartridge->readPRGMemory(address);
 }
 
 void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
@@ -54,7 +54,7 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
         sram[address % 0x2000] = value;
 
     else
-        cartridge->writeMemory(address, value);
+        cartridge->writePRGMemory(address, value);
 }
 
 // FIXME: Reading is extremely common make this faster, maybe all the heavy work should be made when writing

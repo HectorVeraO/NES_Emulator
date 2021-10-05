@@ -39,15 +39,23 @@ Cartridge::Cartridge(std::string sfilepath) : filepath(std::move(sfilepath)) {
     }
 }
 
-uint8_t Cartridge::readMemory(uint16_t address) const {
+Cartridge::~Cartridge() {
+    delete mapper;
+}
+
+uint8_t Cartridge::readPRGMemory(uint16_t address) const {
     return prgROM[mapper->mapToPRG(address)];
 }
 
-void Cartridge::writeMemory(uint16_t address, uint8_t value) {
+void Cartridge::writePRGMemory(uint16_t address, uint8_t value) {
     mapper->handlePRGWrite(address, value);
     capturedPRGWrites.push(value);
 }
 
-Cartridge::~Cartridge() {
-    delete mapper;
+uint8_t Cartridge::readCHRMemory(uint16_t address) const {
+    return chrROM[mapper->mapToCHR(address)];
+}
+
+void Cartridge::writeCHRMemory(uint16_t address, uint8_t value) {
+    mapper->handleCHRWrite(address, value);
 }
