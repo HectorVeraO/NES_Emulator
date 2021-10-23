@@ -4,17 +4,18 @@
 
 #include "NTSC2C02.h"
 
+NTSC2C02::NTSC2C02() {
+    bus = nullptr;
+}
+
+NTSC2C02::~NTSC2C02() = default;
+
 void NTSC2C02::powerUp() {
-    PPUCTRL = 0x00;
-    PPUMASK = 0x00;
-    PPUSTATUS = 0x00;
-    OAMADDR = 0x00;
-    PPUSCROLL = 0x00;
-    PPUADDR = 0x00;
-    PPUDATA = 0x00;
+
 }
 
 void NTSC2C02::clock() {
+    currentCycle++;
 }
 
 void NTSC2C02::connectBus(Bus* newBus) {

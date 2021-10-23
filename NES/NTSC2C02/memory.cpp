@@ -4,11 +4,11 @@
 
 #include "NTSC2C02.h"
 
-uint8_t NTSC2C02::readMemory(uint16_t address) const {
+uint8_t NTSC2C02::readPPUMemory(uint16_t address) const {
     return bus->readPPUMemory(address);
 }
 
-void NTSC2C02::writeMemory(uint16_t address, uint8_t value) {
+void NTSC2C02::writePPUMemory(uint16_t address, uint8_t value) {
     bus->writePPUMemory(address, value);
 }
 

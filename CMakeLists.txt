@@ -12,6 +12,7 @@ include_directories(NES/bus)
 include_directories(NES/Cartridge)
 include_directories(NES/Mapper)
 include_directories(NES/MOS6502)
+include_directories(NES/NTSC2C02)
 
 add_subdirectory(NES)
 add_subdirectory(Test)

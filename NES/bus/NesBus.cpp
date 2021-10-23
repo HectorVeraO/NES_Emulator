@@ -83,3 +83,11 @@ void NesBus::writePPUMemory(uint16_t address, uint8_t value) {
     else
         palettes[address % 0x00F0] = value;
 }
+
+void NesBus::clock() {
+    ppu->clock();
+    if (totalCyclesPerformed % 3 == 0)
+        cpu->clock();
+
+    totalCyclesPerformed++;
+}

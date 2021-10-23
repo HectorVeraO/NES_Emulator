@@ -5,7 +5,9 @@
 #pragma once
 
 
-#include "../Cartridge/Cartridge.h"
+#include "MOS6502.h"
+#include "NTSC2C02.h"
+#include "Cartridge.h"
 #include "Bus.h"
 
 class NesBus : public Bus {
@@ -22,6 +24,8 @@ public:
 
 private:
     Cartridge* cartridge;
+    MOS6502* cpu;
+    NTSC2C02* ppu;
 
     std::array<uint8_t, 0x0800> ram{};
     std::array<uint8_t, 0x0028> ioRegisters{};
@@ -31,6 +35,10 @@ private:
     std::array<uint8_t, 0x2000> patternTables{};
     std::array<uint8_t, 0x0F00> nameTables{};
     std::array<uint8_t, 0x0020> palettes{};
+
+    uint64_t totalCyclesPerformed{ 0 };
+
+    void clock();
 };
 
 
