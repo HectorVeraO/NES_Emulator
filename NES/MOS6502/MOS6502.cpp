@@ -56,8 +56,16 @@ void MOS6502::loop() {
     }
 }
 
+void MOS6502::nmi() {
+    interruptNMI();
+}
+
 void MOS6502::connectBus(Bus* newBus) {
     this->bus = newBus;
+}
+
+void MOS6502::reset() {
+    interruptReset();
 }
 
 uint8_t MOS6502::readMemory(uint16_t address) const {

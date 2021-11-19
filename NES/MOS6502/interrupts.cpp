@@ -39,11 +39,9 @@ void MOS6502::interruptIRQ() {
 }
 
 void MOS6502::interruptReset() {
-    uint16_t oldPC = PC;
     uint8_t preservedP = P;
     preservedP &= ~(1 << 4);
     preservedP |= (1 << 5);
     interrupt(0xFFFC, 0xFFFD, preservedP);
-    PC = oldPC;
-    setFlag(Flag::InterruptDisable, true);
+    setFlag(Flag::B, true);
 }

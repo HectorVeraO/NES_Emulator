@@ -32,7 +32,9 @@ public:
 
     void loop();
     void clock();
+    void nmi();
     void connectBus(Bus* newBus);
+    void reset();
 
     [[nodiscard]] inline uint8_t getA() const {
         return A;
