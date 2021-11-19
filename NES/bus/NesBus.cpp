@@ -4,29 +4,50 @@
 
 #include "NesBus.h"
 
-NesBus::NesBus() {
+NesBus::NesBus() : platform("WDNES", 256, 240), cpu(), ppu() {
     cartridge = nullptr;
-    for (auto& slot: ram)
-        slot = 0x00;
+    cpu.connectBus(this);
+    ppu.connectPlatform(&platform);
+    ram.resize(0x0800);
+    ioRegisters.resize(0x0028);
+    expansionROM.resize(0x1FE0);
+    sram.resize(0x2000);
+    patternTables.resize(0x2000);
+    nameTables.resize(0x0F00);
+    palettes.resize(0x0020);
 }
 
-NesBus::~NesBus() {
-    delete cartridge;
+NesBus::~NesBus() = default;
+
+void NesBus::loadCartridge(std::shared_ptr<Cartridge> const& newCartridge) {
+    cartridge = newCartridge;
+    ppu.loadCartridge(newCartridge);
 }
 
-void NesBus::connectCartridge(std::string const& cartridgePath) {
-    cartridge = new Cartridge(cartridgePath);
+void NesBus::reset() {
+    cartridge->reset();
+    cpu.reset();
+    ppu.reset();
+    totalCyclesPerformed = 0;
 }
 
-uint8_t NesBus::readCPUMemory(uint16_t address) const {
+void NesBus::powerUp() {
+    bool quit = false;
+    while (!quit) {
+        clock();
+        quit = platform.processInput();
+    }
+}
+
+uint8_t NesBus::readCPUMemory(uint16_t address) {
     if (address < 0x2000)
         return ram[address % 0x0800];
 
     if (address < 0x4000)
-        return ioRegisters[address % 0x0008];
+        return ppu.readCPUMemory(address);
 
     if (address < 0x4020)
-        return ioRegisters[address % 0x0020];
+        return ioRegisters[address % 0x0020];   // TODO: Link controller state
 
     if (address < 0x6000)
         return expansionROM[address % 0x1FE0];
@@ -42,10 +63,10 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
         ram[address % 0x0800] = value;
 
     else if (address < 0x4000)
-        ioRegisters[address % 0x0008] = value;
+        ppu.writeCPUMemory(address, value);
 
     else if (address < 0x4020)
-        ioRegisters[address % 0x0020] = value;
+        ioRegisters[address % 0x0020] = value;  // TODO: Link controller state
 
     else if (address < 0x6000)
         expansionROM[address % 0x1FE0] = value;
@@ -57,37 +78,15 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
         cartridge->writePRGMemory(address, value);
 }
 
-// FIXME: Reading is extremely common make this faster, maybe all the heavy work should be made when writing
-uint8_t NesBus::readPPUMemory(uint16_t address) const {
-    if (address < 0x2000)
-        return patternTables[address];
-
-    if (address < 0x3F00)
-        return nameTables[address % 0x0F00];
-
-    if (address < 0x4000)
-        return palettes[address % 0x00F0];
-
-    return readPPUMemory(address - 0x4000);
-}
-
-void NesBus::writePPUMemory(uint16_t address, uint8_t value) {
-    address %= 0x4000;
-
-    if (address < 0x2000)
-        patternTables[address] = value;
-
-    else if (address < 0x3F00)
-        nameTables[address % 0x0F00] = value;
-
-    else
-        palettes[address % 0x00F0] = value;
-}
-
 void NesBus::clock() {
-    ppu->clock();
+    ppu.clock();
     if (totalCyclesPerformed % 3 == 0)
-        cpu->clock();
+        cpu.clock();
+
+    if (ppu.nmi) {
+        ppu.nmi = false;
+        cpu.nmi();
+    }
 
     totalCyclesPerformed++;
 }

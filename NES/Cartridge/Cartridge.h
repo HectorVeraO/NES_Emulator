@@ -10,17 +10,33 @@
 #include <stack>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include "../Mapper/Mapper.h"
 
 class Cartridge {
 public:
-    explicit Cartridge(std::string sfilepath);
+    enum class MirroringType {
+        Undefined = 0,
+        Vertical = 1,
+        Horizontal = 2,
+        OneScreenLo = 3,
+        OneScreenHi = 4
+    };
+
+    explicit Cartridge(const std::string& filePath);
     virtual ~Cartridge();
+
+    [[nodiscard]] bool isValid() const;
 
     [[nodiscard]] uint8_t readPRGMemory(uint16_t address) const;
     void writePRGMemory(uint16_t address, uint8_t value);
+
     [[nodiscard]] uint8_t readCHRMemory(uint16_t address) const;
     void writeCHRMemory(uint16_t address, uint8_t value);
+
+    [[nodiscard]] Cartridge::MirroringType getMirroring() const;
+
+    void reset();
 
 private:
     struct INESHeader {
@@ -34,19 +50,20 @@ private:
         char unused[7];
     } header{};
 
-    enum MirroringType {
-        Vertical = 1,
-        Horizontal = 2
-    };
+    bool isValidROM{ false };
 
-    Mapper* mapper;
-    MirroringType mirroringType;
-    bool hasBatteryBackedRAM;
-    bool useFourScreenMirroring;
-    std::string const filepath;
-    std::vector<uint8_t> prgROM;
-    std::vector<uint8_t> chrROM;
-    std::stack<uint8_t> capturedPRGWrites;
+    uint8_t mapperId{0};
+    uint8_t prgMemoryBankCount{0};
+    uint8_t chrMemoryBankCount{0};
+
+    std::vector<uint8_t> prgRom{};
+    std::vector<uint8_t> chrRom{};
+    std::stack<uint8_t> capturedPrgWrites{};
+    std::shared_ptr<Mapper> mapper{ nullptr };
+
+    MirroringType mirroring{ MirroringType::Undefined };
+    bool useFourScreenMirroring{ false };
+    bool hasBatteryBackedRAM{ false };
 };
 
 

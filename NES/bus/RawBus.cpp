@@ -22,7 +22,7 @@ RawBus::RawBus(std::vector<uint8_t> rom) : cpuMemory(std::move(rom)) {
 
 RawBus::~RawBus() = default;
 
-uint8_t RawBus::readCPUMemory(uint16_t address) const {
+uint8_t RawBus::readCPUMemory(uint16_t address) {
     return cpuMemory[address];
 }
 
@@ -30,10 +30,14 @@ void RawBus::writeCPUMemory(uint16_t address, uint8_t value) {
     cpuMemory[address] = value;
 }
 
-uint8_t RawBus::readPPUMemory(uint16_t address) const {
-    return ppuMemory[address];
+void RawBus::reset() {
+
 }
 
-void RawBus::writePPUMemory(uint16_t address, uint8_t value) {
-    ppuMemory[address] = value;
+void RawBus::clock() {
+
+}
+
+void RawBus::loadCartridge(std::shared_ptr<Cartridge> const& cartridge) {
+
 }

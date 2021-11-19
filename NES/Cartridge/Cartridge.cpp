@@ -5,57 +5,71 @@
 #include "Cartridge.h"
 #include "Mapper0.h"
 
-Cartridge::Cartridge(std::string sfilepath) : filepath(std::move(sfilepath)) {
-    std::ifstream romifs(filepath, std::ios::binary);
+Cartridge::Cartridge(const std::string& filePath) {
+    std::ifstream romifs(filePath, std::ios::binary);
     if (romifs.is_open()) {
         romifs.read(reinterpret_cast<char*>(&header), sizeof header);
 
         if (header.romControl1 & 0x04)  // Skip trainer
             romifs.ignore(512);
 
-        mirroringType = header.romControl1 & 0x01 ? MirroringType::Vertical : MirroringType::Horizontal;
+        mirroring = header.romControl1 & 0x01 ? MirroringType::Vertical : MirroringType::Horizontal;
         hasBatteryBackedRAM = header.romControl1 & 0x02;
         useFourScreenMirroring = header.romControl1 & 0x08;
-        uint8_t mapperNumber = header.romControl1 & 0xF0;
-        switch (mapperNumber) {
+        mapperId = header.romControl1 & 0xF0;
+        switch (mapperId) {
             case 0x00: {
-                mapper = new Mapper0(header.prgRomBankCount, header.chrRomBankCount);
+                mapper = std::make_shared<Mapper0>(header.prgRomBankCount, header.chrRomBankCount);
                 break;
             }
             default: {
-                std::cout << "Mapper" << mapperNumber << " is not implemented" << std::endl;
+                std::cout << "Mapper" << mapperId << " is not implemented" << std::endl;
             }
         }
 
-        uint32_t prgROMSize = header.prgRomBankCount * 0x4000;
-        prgROM.resize(prgROMSize);
-        romifs.read(reinterpret_cast<char*>(prgROM.data()), prgROMSize);
+        prgMemoryBankCount = header.prgRomBankCount;
+        uint32_t prgROMSize = prgMemoryBankCount * 0x4000;
+        prgRom.resize(prgROMSize);
+        romifs.read(reinterpret_cast<char*>(prgRom.data()), prgROMSize);
 
-        uint32_t chrROMSize = header.chrRomBankCount * 0x2000;
-        chrROM.resize(chrROMSize);
-        romifs.read(reinterpret_cast<char*>(chrROM.data()), chrROMSize);
+        chrMemoryBankCount = header.chrRomBankCount;
+        uint32_t chrROMSize = chrMemoryBankCount * 0x2000;
+        chrRom.resize(chrROMSize);
+        romifs.read(reinterpret_cast<char*>(chrRom.data()), chrROMSize);
 
+        isValidROM = true;
         romifs.close();
     }
 }
 
-Cartridge::~Cartridge() {
-    delete mapper;
+Cartridge::~Cartridge() = default;
+
+bool Cartridge::isValid() const {
+    return isValidROM;
 }
 
 uint8_t Cartridge::readPRGMemory(uint16_t address) const {
-    return prgROM[mapper->mapToPRG(address)];
+    return prgRom[mapper->mapToPRG(address)];
 }
 
 void Cartridge::writePRGMemory(uint16_t address, uint8_t value) {
     mapper->handlePRGWrite(address, value);
-    capturedPRGWrites.push(value);
+    capturedPrgWrites.push(value);
 }
 
 uint8_t Cartridge::readCHRMemory(uint16_t address) const {
-    return chrROM[mapper->mapToCHR(address)];
+    return chrRom[mapper->mapToCHR(address)];
 }
 
 void Cartridge::writeCHRMemory(uint16_t address, uint8_t value) {
     mapper->handleCHRWrite(address, value);
+}
+
+Cartridge::MirroringType Cartridge::getMirroring() const {
+    return mirroring;
+}
+
+void Cartridge::reset() {
+    if (mapper != nullptr)
+        mapper->reset();
 }
