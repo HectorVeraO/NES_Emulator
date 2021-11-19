@@ -7,6 +7,7 @@ project(WDNES
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include_directories(NES/bus)
 include_directories(NES/Cartridge)
@@ -20,20 +21,17 @@ add_subdirectory(Test)
 add_subdirectory(Platform)
 
 include(FetchContent)
-
 FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
 )
-FetchContent_MakeAvailable(spdlog)
-include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
-
 FetchContent_Declare(
         sdl2
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG release-2.0.16
 )
-FetchContent_MakeAvailable(sdl2)
+FetchContent_MakeAvailable(spdlog sdl2)
+include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
 include_directories(${sdl2_SOURCE_DIR}/include ${sdl2_SOURCE_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS  ON)
@@ -42,6 +40,3 @@ add_executable(WDNES main.cpp)
 target_compile_options(WDNES PRIVATE -Wall -Wextra)
 target_compile_definitions(NES_LIB PRIVATE DISABLE_6502_BUGS=0)
 target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog mingw32 SDL2main SDL2-static)
-#target_link_libraries(WDNES PRIVATE PlatformLib)
-#target_link_libraries(WDNES PRIVATE spdlog)
-#target_link_libraries(WDNES PRIVATE mingw32 SDL2main SDL2-static)
