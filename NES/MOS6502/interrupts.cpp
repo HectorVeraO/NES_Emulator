@@ -25,6 +25,8 @@ void MOS6502::interruptNMI() {
     preservedP |= ~(1 << 4);
     preservedP |= (1 << 5);
     setFlag(Flag::B, false);
+    setFlag(Flag::BreakCommand, false);
+    setFlag(Flag::InterruptDisable, true);
     interrupt(0xFFFA, 0xFFFB, preservedP);
 }
 

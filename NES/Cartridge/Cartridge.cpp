@@ -16,7 +16,7 @@ Cartridge::Cartridge(const std::string& filePath) {
         mirroring = header.romControl1 & 0x01 ? MirroringType::Vertical : MirroringType::Horizontal;
         hasBatteryBackedRAM = header.romControl1 & 0x02;
         useFourScreenMirroring = header.romControl1 & 0x08;
-        mapperId = header.romControl1 & 0xF0;
+        mapperId = ((header.romControl2 & 0xF0) << 4) | header.romControl1 & 0xF0;
         switch (mapperId) {
             case 0x00: {
                 mapper = std::make_shared<Mapper0>(header.prgRomBankCount, header.chrRomBankCount);
@@ -26,6 +26,11 @@ Cartridge::Cartridge(const std::string& filePath) {
                 std::cout << "Mapper" << mapperId << " is not implemented" << std::endl;
             }
         }
+
+        if (header.prgRomBankCount == 0)
+            header.prgRomBankCount = 1;
+        if (header.chrRomBankCount == 0)
+            header.chrRomBankCount = 1;
 
         prgMemoryBankCount = header.prgRomBankCount;
         uint32_t prgROMSize = prgMemoryBankCount * 0x4000;
