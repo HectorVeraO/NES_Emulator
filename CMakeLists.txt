@@ -38,5 +38,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS  ON)
 
 add_executable(WDNES main.cpp)
 target_compile_options(WDNES PRIVATE -Wall -Wextra)
-target_compile_definitions(NES_LIB PRIVATE DISABLE_6502_BUGS=0)
+target_compile_definitions(NES_LIB PRIVATE DISABLE_6502_BUGS=0 DISABLE_6502_LOGS=1)
 target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog mingw32 SDL2main SDL2-static)

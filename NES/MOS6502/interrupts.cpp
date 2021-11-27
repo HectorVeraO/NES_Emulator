@@ -36,6 +36,7 @@ void MOS6502::interruptIRQ() {
         preservedP &= ~(1 << 4);
         preservedP |= (1 << 5);
         setFlag(Flag::B, false);
+        setFlag(Flag::InterruptDisable, true);
         interrupt(0xFFFE, 0xFFFF, preservedP);
     }
 }

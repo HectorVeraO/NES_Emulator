@@ -4,6 +4,10 @@
 #define DISABLE_6502_BUGS 0
 #endif
 
+#ifndef DISABLE_6502_LOGS
+#define DISABLE_6502_LOGS 0
+#endif
+
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
@@ -100,7 +104,9 @@ private:
         std::string firstOperand = maybeFirstOperand.has_value() ? fmt::format("{:0>2X}", maybeFirstOperand.value()) : "  ";
         std::string secondOperand = maybeSecondOperand.has_value() ? fmt::format("{:0>2X}", maybeSecondOperand.value()) : "  ";
         // Logging format at http://www.qmtpro.com/~nes/misc/nestest.log
+#if !(DISABLE_6502_LOGS)
         logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", startingPC, opcode, firstOperand, secondOperand, operationAlias, opaddress, A, X, Y, P, S, ppuX, ppuY, totalCyclesPerformed);
+#endif
     }
 
     // execute.cpp
