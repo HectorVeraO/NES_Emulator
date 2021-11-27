@@ -44,7 +44,7 @@ uint8_t NesBus::readCPUMemory(uint16_t address) {
         return ram[address % 0x0800];
 
     if (address < 0x4000)
-        return ppu.readCPUMemory(address);
+        return ppu.readIO(address);
 
     if (address < 0x4020)
         return ioRegisters[address % 0x0020];   // TODO: Link controller state
@@ -63,7 +63,7 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
         ram[address % 0x0800] = value;
 
     else if (address < 0x4000)
-        ppu.writeCPUMemory(address, value);
+        ppu.writeIO(address, value);
 
     else if (address < 0x4020)
         ioRegisters[address % 0x0020] = value;  // TODO: Link controller state

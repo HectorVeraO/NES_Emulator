@@ -45,34 +45,34 @@ void NTSC2C02::reset() {
 void NTSC2C02::clock() {
     auto incrementScrollX = [&]() {
         if (PPUMASK.b || PPUMASK.s) {
-            if (loopy.v.horizontalOffset.to_ulong() == 31) {
-                loopy.v.horizontalOffset = 0;
-                loopy.v.horizontalNametable.flip();
+            if (loopy.v.coarseX.to_ulong() == 31) {
+                loopy.v.coarseX = 0;
+                loopy.v.nametableX.flip();
             } else {
-                loopy.v.horizontalOffset = loopy.v.horizontalOffset.to_ulong() + 1;
+                loopy.v.coarseX = loopy.v.coarseX.to_ulong() + 1;
             }
         }
     };
 
     auto incrementScrollY = [&]() {
         if (PPUMASK.b || PPUMASK.s) {
-            if (loopy.v.tileVerticalOffset.to_ulong() < 7) {
-                loopy.v.tileVerticalOffset = loopy.v.tileVerticalOffset.to_ulong() + 1;
+            if (loopy.v.fineY.to_ulong() < 7) {
+                loopy.v.fineY = loopy.v.fineY.to_ulong() + 1;
             } else {
-                loopy.v.tileVerticalOffset = 0;
+                loopy.v.fineY = 0;
 
-                switch (loopy.v.verticalOffset.to_ulong()) {
+                switch (loopy.v.coarseY.to_ulong()) {
                     case 29: {
-                        loopy.v.verticalOffset = 0;
-                        loopy.v.verticalNametable.flip();
+                        loopy.v.coarseY = 0;
+                        loopy.v.nametableY.flip();
                         break;
                     }
                     case 31: {
-                        loopy.v.verticalOffset = 0;
+                        loopy.v.coarseY = 0;
                         break;
                     }
                     default: {
-                        loopy.v.verticalOffset = loopy.v.verticalOffset.to_ulong() + 1;
+                        loopy.v.coarseY = loopy.v.coarseY.to_ulong() + 1;
                     }
                 }
             }
@@ -81,15 +81,15 @@ void NTSC2C02::clock() {
 
     auto transferAddressX = [&]() {
         if (PPUMASK.b || PPUMASK.s) {
-            loopy.v.horizontalNametable = loopy.t.horizontalNametable;
-            loopy.v.horizontalOffset = loopy.t.horizontalOffset;
+            loopy.v.nametableX = loopy.t.nametableX;
+            loopy.v.coarseX = loopy.t.coarseX;
         }
     };
 
     auto transferAddressY = [&]() {
-        loopy.v.tileVerticalOffset = loopy.t.tileVerticalOffset;
-        loopy.v.verticalNametable = loopy.t.verticalNametable;
-        loopy.v.verticalOffset = loopy.t.verticalOffset;
+        loopy.v.fineY = loopy.t.fineY;
+        loopy.v.nametableY = loopy.t.nametableY;
+        loopy.v.coarseY = loopy.t.coarseY;
     };
 
     auto loadBackgroundShifters = [&]() {
@@ -132,10 +132,10 @@ void NTSC2C02::clock() {
                     // Fetch attribute table byte
                     auto v = static_cast<uint16_t>(loopy.v);
                     bgNextTileAttribute = readPPUMemory(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07));
-                    if (loopy.v.verticalOffset.to_ulong() & 0x02) {
+                    if (loopy.v.coarseY.to_ulong() & 0x02) {
                         bgNextTileAttribute >>= 4;
                     }
-                    if (loopy.v.horizontalOffset.to_ulong() & 0x02) {
+                    if (loopy.v.coarseX.to_ulong() & 0x02) {
                         bgNextTileAttribute >>= 2;
                     }
                     bgNextTileAttribute &= 0x03;
@@ -143,12 +143,12 @@ void NTSC2C02::clock() {
                 }
                 case 4: {
                     // Fetch pattern table's low plane
-                    bgNextTileLsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.tileVerticalOffset.to_ulong() + 0);
+                    bgNextTileLsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.fineY.to_ulong() + 0);
                     break;
                 }
                 case 6: {
                     // Fetch pattern table's high plane (it's 8 bytes from the low plane)
-                    bgNextTileLsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.tileVerticalOffset.to_ulong() + 8);
+                    bgNextTileLsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.fineY.to_ulong() + 8);
                     break;
                 }
                 case 7: {
@@ -187,7 +187,7 @@ void NTSC2C02::clock() {
     uint8_t bgPalette = 0x00;
 
     if (PPUMASK.b) {
-        uint16_t bitMultiplexer = 0x8000 >> loopy.x.to_ulong();
+        uint16_t bitMultiplexer = 0x8000 >> loopy.fineX.to_ulong();
 
         uint8_t pixelLsb = (bgShifterPatternLsb & bitMultiplexer) > 0;
         uint8_t pixelMsb = (bgShifterPatternMsb & bitMultiplexer) > 0;

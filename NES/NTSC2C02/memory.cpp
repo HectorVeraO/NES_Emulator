@@ -107,7 +107,7 @@ void NTSC2C02::writePPUMemory(uint16_t address, uint8_t value) {
     }
 }
 
-uint8_t NTSC2C02::readCPUMemory(uint16_t address) {
+uint8_t NTSC2C02::readIO(uint16_t address) {
     uint8_t output{ 0x00 };
     if (address >= 0x2000 && address < 0x4000) {
         switch (address % 8) {
@@ -164,14 +164,14 @@ uint8_t NTSC2C02::readCPUMemory(uint16_t address) {
     return output;
 }
 
-void NTSC2C02::writeCPUMemory(uint16_t address, uint8_t value) {
+void NTSC2C02::writeIO(uint16_t address, uint8_t value) {
     if (address >= 0x2000 && address < 0x4000) {
         switch (address % 8) {
             case 0: {
                 PPUCTRL = value;
                 uint8_t const& NN = PPUCTRL.NN.to_ulong();
-                loopy.t.horizontalNametable.set(0, (NN >> 0) & 0x01);
-                loopy.t.verticalNametable.set(0, (NN >> 1) & 0x01);
+                loopy.t.nametableX.set(0, (NN >> 0) & 0x01);
+                loopy.t.nametableY.set(0, (NN >> 1) & 0x01);
                 break;
             }
             case 1: {
@@ -190,11 +190,11 @@ void NTSC2C02::writeCPUMemory(uint16_t address, uint8_t value) {
             case 5: {
                 PPUSCROLL = value;
                 if (loopy.w.none()) {
-                    loopy.t.horizontalOffset = value >> 3;
-                    loopy.x = value & 0x07;
+                    loopy.t.coarseX = value >> 3;
+                    loopy.fineX = value & 0x07;
                 } else {
-                    loopy.t.verticalOffset = value >> 3;
-                    loopy.t.tileVerticalOffset = value & 0x07;
+                    loopy.t.coarseY = value >> 3;
+                    loopy.t.fineY = value & 0x07;
                 }
                 loopy.w.flip();
                 break;

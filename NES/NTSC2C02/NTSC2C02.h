@@ -23,8 +23,8 @@ public:
     // memory.cpp
     [[nodiscard]] uint8_t readPPUMemory(uint16_t address) const;
     void writePPUMemory(uint16_t address, uint8_t value);
-    [[nodiscard]] uint8_t readCPUMemory(uint16_t address);
-    void writeCPUMemory(uint16_t address, uint8_t value);
+    [[nodiscard]] uint8_t readIO(uint16_t address);
+    void writeIO(uint16_t address, uint8_t value);
 private:
     Canvas* canvas{ nullptr };
     std::shared_ptr<Cartridge> cartridge{ nullptr };
@@ -234,27 +234,27 @@ private:
     private:
         class VRAMAddressRegister {
         public:
-            std::bitset<5> horizontalOffset;
-            std::bitset<5> verticalOffset;
-            std::bitset<1> horizontalNametable;
-            std::bitset<1> verticalNametable;
-            std::bitset<3> tileVerticalOffset;
+            std::bitset<5> coarseX;
+            std::bitset<5> coarseY;
+            std::bitset<1> nametableX;
+            std::bitset<1> nametableY;
+            std::bitset<3> fineY;
             std::bitset<1> unused;
 
             [[nodiscard]] std::bitset<2> getNametableSelect() const {
-                return { (horizontalNametable.to_ulong() << 0) | (verticalNametable.to_ulong() << 1) };
+                return { (nametableX.to_ulong() << 0) | (nametableY.to_ulong() << 1) };
             }
 
             explicit operator uint16_t() const {
-                return (horizontalOffset.to_ulong() << 0) | (verticalOffset.to_ulong() << 5) | (horizontalNametable.to_ulong() << 10) | (verticalNametable.to_ulong() << 11) | (tileVerticalOffset.to_ulong() << 12) | (unused.to_ulong() << 15);
+                return (coarseX.to_ulong() << 0) | (coarseY.to_ulong() << 5) | (nametableX.to_ulong() << 10) | (nametableY.to_ulong() << 11) | (fineY.to_ulong() << 12) | (unused.to_ulong() << 15);
             };
 
             VRAMAddressRegister& operator=(uint16_t const& rhs) {
-                horizontalOffset = (rhs >> 0) & 0x001F;
-                verticalOffset = (rhs >> 5) & 0x001F;
-                horizontalNametable = (rhs >> 10) & 0x0001;
-                verticalNametable = (rhs >> 11) & 0x0001;
-                tileVerticalOffset = (rhs >> 12) & 0x0007;
+                coarseX = (rhs >> 0) & 0x001F;
+                coarseY = (rhs >> 5) & 0x001F;
+                nametableX = (rhs >> 10) & 0x0001;
+                nametableY = (rhs >> 11) & 0x0001;
+                fineY = (rhs >> 12) & 0x0007;
                 unused = (rhs >> 15) & 0x0001;
                 return *this;
             }
@@ -263,7 +263,7 @@ private:
     public:
         VRAMAddressRegister v;  // VRAM address, maps to $2006
         VRAMAddressRegister t;  // Temporal VRAM address
-        std::bitset<3> x;
+        std::bitset<3> fineX;
         std::bitset<1> w;       // Shared latch
     } loopy;
 
