@@ -5,6 +5,7 @@
 #pragma once
 
 #include <bitset>
+#include "Canvas.h"
 #include "Bus.h"
 
 class NTSC2C02 {
@@ -12,23 +13,30 @@ public:
     NTSC2C02();
     ~NTSC2C02();
 
-    void powerUp();
-    void clock();
-    void connectBus(Bus* newBus);
+    bool nmi{ false };
 
+    void clock();
+    void reset();
+    void loadCartridge(std::shared_ptr<Cartridge> const& newCartridge);
+    void connectPlatform(Canvas* platform);
 
     // memory.cpp
     [[nodiscard]] uint8_t readPPUMemory(uint16_t address) const;
     void writePPUMemory(uint16_t address, uint8_t value);
-    [[nodiscard]] uint8_t readCPUMemory(uint16_t address) const;
+    [[nodiscard]] uint8_t readCPUMemory(uint16_t address);
     void writeCPUMemory(uint16_t address, uint8_t value);
 private:
-    Bus* bus;
+    Canvas* canvas{ nullptr };
+    std::shared_ptr<Cartridge> cartridge{ nullptr };
+
     int16_t currentScanline{ -1 };
     int16_t currentCycle{ 0 };
 
-    std::array<std::array<uint8_t, 1024>, 2> nametables{};
+    typedef std::vector<std::vector<uint8_t>> uint8_matrix;
+    uint8_matrix nameTables{};
+    uint8_matrix patternTables{};
     std::array<uint8_t, 32> palettes{};
+    std::array<uint32_t, 64> rgbColors{};
 
     class MemoryMappedRegister {
     public:
@@ -38,11 +46,7 @@ private:
 
     class ControllerRegister : public MemoryMappedRegister {
     public:
-        enum class Nametable : uint8_t {
-            First = 0, Second = 1, Third = 2, Fourth = 3
-        };
-
-        Nametable NN{ Nametable::First };
+        std::bitset<2> NN;
         bool I{ false };
         bool S{ false };
         bool B{ false };
@@ -55,11 +59,11 @@ private:
         }
 
         explicit operator uint8_t() const override {
-            return (static_cast<uint8_t>(NN) << 0) | (I << 2) | (S << 3) << (B << 4) << (H << 5) << (P << 6) << (V << 7);
+            return (NN.to_ulong() << 0) | (I << 2) | (S << 3) << (B << 4) << (H << 5) << (P << 6) << (V << 7);
         }
 
         ControllerRegister& operator=(uint8_t const& rhs) {
-            NN = Nametable((rhs >> 0) & 0x03);
+            NN = (rhs >> 0) & 0x03;
             I = (rhs >> 2) & 0x01;
             S = (rhs >> 3) & 0x01;
             B = (rhs >> 4) & 0x01;
@@ -116,6 +120,15 @@ private:
         explicit operator uint8_t() const override {
             return (rest.to_ulong() << 0) | (O << 5) | (S << 6) | (V << 7);
         }
+
+        StatusRegister& operator=(const uint8_t& rhs) {
+            rest = rhs & 0x1F;
+            O = (rhs >> 5) & 0x01;
+            S = (rhs >> 6) & 0x01;
+            V = (rhs >> 7) & 0x01;
+
+            return *this;
+        }
     } PPUSTATUS;
 
     class OAMAdressRegister : public MemoryMappedRegister {
@@ -128,6 +141,12 @@ private:
 
         explicit operator uint8_t() const override {
             return value;
+        }
+
+        OAMAdressRegister& operator=(const uint8_t& rhs) {
+            value = rhs;
+
+            return *this;
         }
     } OAMADDR;
 
@@ -146,15 +165,19 @@ private:
 
     class ScrollRegister : MemoryMappedRegister {
     public:
-        std::bitset<4> fineX;
-        std::bitset<4> fineY;
+        uint8_t fineOffset{ 0x00 };
 
         [[nodiscard]] uint16_t getAddress() const override {
             return 0x2005;
         }
 
         explicit operator uint8_t() const override {
-            return (fineX.to_ulong() << 0) | (fineY.to_ulong() << 4);   // TODO: Unsure if fineX is the first nibble
+            return fineOffset;
+        }
+
+        ScrollRegister& operator=(uint8_t const& rhs) {
+            fineOffset = rhs;
+            return *this;
         }
     } PPUSCROLL;
 
@@ -169,6 +192,11 @@ private:
         explicit operator uint8_t() const override {
             return value;
         }
+
+        AddressRegister& operator=(uint8_t const& rhs) {
+            value = rhs;
+            return *this;
+        }
     } PPUADDR;
 
     class DataRegister : MemoryMappedRegister {
@@ -181,6 +209,11 @@ private:
 
         explicit operator uint8_t() const override {
             return value;
+        }
+
+        DataRegister& operator=(uint8_t const& rhs) {
+            value = rhs;
+            return *this;
         }
     } PPUDATA;
 
@@ -198,7 +231,9 @@ private:
     } OAMDMA;
 
     class LoopyRegister {
+    private:
         class VRAMAddressRegister {
+        public:
             std::bitset<5> horizontalOffset;
             std::bitset<5> verticalOffset;
             std::bitset<1> horizontalNametable;
@@ -206,20 +241,48 @@ private:
             std::bitset<3> tileVerticalOffset;
             std::bitset<1> unused;
 
-            [[nodiscard]] std::bitset<12> getNametableAddressBits() const {
-                return { (horizontalOffset.to_ulong() << 0) | (verticalOffset.to_ulong() << 5) | (horizontalNametable.to_ulong() << 10) | (verticalNametable.to_ulong() << 11) };
+            [[nodiscard]] std::bitset<2> getNametableSelect() const {
+                return { (horizontalNametable.to_ulong() << 0) | (verticalNametable.to_ulong() << 1) };
             }
 
             explicit operator uint16_t() const {
-                return (getNametableAddressBits().to_ulong() << 0) | (tileVerticalOffset.to_ulong() << 12) | (unused.to_ulong() << 15);
+                return (horizontalOffset.to_ulong() << 0) | (verticalOffset.to_ulong() << 5) | (horizontalNametable.to_ulong() << 10) | (verticalNametable.to_ulong() << 11) | (tileVerticalOffset.to_ulong() << 12) | (unused.to_ulong() << 15);
             };
+
+            VRAMAddressRegister& operator=(uint16_t const& rhs) {
+                horizontalOffset = (rhs >> 0) & 0x001F;
+                verticalOffset = (rhs >> 5) & 0x001F;
+                horizontalNametable = (rhs >> 10) & 0x0001;
+                verticalNametable = (rhs >> 11) & 0x0001;
+                tileVerticalOffset = (rhs >> 12) & 0x0007;
+                unused = (rhs >> 15) & 0x0001;
+                return *this;
+            }
         };
 
+    public:
         VRAMAddressRegister v;  // VRAM address, maps to $2006
         VRAMAddressRegister t;  // Temporal VRAM address
         std::bitset<3> x;
-        std::bitset<1> w;
-    };
+        std::bitset<1> w;       // Shared latch
+    } loopy;
+
+    uint8_t dataBuffer{ 0x00 };
+
+    uint8_t bgNextTileId = 0x00;
+    uint8_t bgNextTileAttribute = 0x00;
+    uint8_t bgNextTileLsb = 0x0;
+    uint8_t bgNextTileMsb = 0x0;
+
+    uint16_t bgShifterPatternLsb = 0x0000;
+    uint16_t bgShifterPatternMsb = 0x0000;
+    uint16_t bgShifterAttributeLsb = 0x0000;
+    uint16_t bgShifterAttributeMsb = 0x0000;
+
+    std::vector<uint32_t> frameBuffer{};
+
+    [[nodiscard]] uint32_t getPixelColor(uint8_t pixel, uint8_t palette) const;
+    void drawFrame();
 };
 
 
