@@ -40,7 +40,6 @@ private:
 
     class MemoryMappedRegister {
     public:
-        [[nodiscard]] virtual uint16_t getAddress() const = 0;
         virtual explicit operator uint8_t() const = 0;
     };
 
@@ -53,10 +52,6 @@ private:
         bool H{ false };
         bool P{ false };
         bool V{ false };
-
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2000;
-        }
 
         explicit operator uint8_t() const override {
             return (NN.to_ulong() << 0) | (I << 2) | (S << 3) << (B << 4) << (H << 5) << (P << 6) << (V << 7);
@@ -84,10 +79,6 @@ private:
         bool s{ false };
         std::bitset<3> BGR;
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2001;
-        }
-
         explicit operator uint8_t() const override {
             return (G << 0) | (m << 1) | (M << 2) | (b << 3) | (s << 4) | (BGR.to_ulong() << 5);
         }
@@ -113,10 +104,6 @@ private:
         bool S{ false };
         bool V{ false };
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2002;
-        }
-
         explicit operator uint8_t() const override {
             return (rest.to_ulong() << 0) | (O << 5) | (S << 6) | (V << 7);
         }
@@ -135,10 +122,6 @@ private:
     public:
         uint8_t value{ 0x00 };
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2003;
-        }
-
         explicit operator uint8_t() const override {
             return value;
         }
@@ -154,10 +137,6 @@ private:
     public:
         uint8_t value{ 0x00 };
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2004;
-        }
-
         explicit operator uint8_t() const override {
             return value;
         }
@@ -166,10 +145,6 @@ private:
     class ScrollRegister : MemoryMappedRegister {
     public:
         uint8_t fineOffset{ 0x00 };
-
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2005;
-        }
 
         explicit operator uint8_t() const override {
             return fineOffset;
@@ -185,10 +160,6 @@ private:
     public:;
         uint8_t value{ 0x00 };
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2006;
-        }
-
         explicit operator uint8_t() const override {
             return value;
         }
@@ -203,10 +174,6 @@ private:
     public:
         uint8_t value{ 0x00 };
 
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x2007;
-        }
-
         explicit operator uint8_t() const override {
             return value;
         }
@@ -220,10 +187,6 @@ private:
     class DMARegister : MemoryMappedRegister {
     public:
         uint8_t value{ 0x00 };
-
-        [[nodiscard]] uint16_t getAddress() const override {
-            return 0x4014;
-        }
 
         explicit operator uint8_t() const override {
             return value;
@@ -240,10 +203,6 @@ private:
             std::bitset<1> nametableY;
             std::bitset<3> fineY;
             std::bitset<1> unused;
-
-            [[nodiscard]] std::bitset<2> getNametableSelect() const {
-                return { (nametableX.to_ulong() << 0) | (nametableY.to_ulong() << 1) };
-            }
 
             explicit operator uint16_t() const {
                 return (coarseX.to_ulong() << 0) | (coarseY.to_ulong() << 5) | (nametableX.to_ulong() << 10) | (nametableY.to_ulong() << 11) | (fineY.to_ulong() << 12) | (unused.to_ulong() << 15);
