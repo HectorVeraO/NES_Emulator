@@ -148,7 +148,7 @@ void NTSC2C02::clock() {
                 }
                 case 6: {
                     // Fetch pattern table's high plane (it's 8 bytes from the low plane)
-                    bgNextTileLsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.fineY.to_ulong() + 8);
+                    bgNextTileMsb = readPPUMemory((PPUCTRL.B << 12) + (static_cast<uint16_t>(bgNextTileId) << 4) + loopy.v.fineY.to_ulong() + 8);
                     break;
                 }
                 case 7: {
