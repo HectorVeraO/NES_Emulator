@@ -68,6 +68,10 @@ void MOS6502::reset() {
     interruptReset();
 }
 
+bool MOS6502::requiresFetch() const {
+    return fetchingInstructions.contains(opAlias);
+}
+
 uint8_t MOS6502::readMemory(uint16_t address) const {
     return bus->readCPUMemory(address);
 }

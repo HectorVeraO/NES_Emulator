@@ -127,7 +127,7 @@ uint8_t NTSC2C02::readIO(uint16_t address) {
                 auto status = static_cast<uint8_t>(PPUSTATUS);
                 output = (status & 0xE0) | (dataBuffer & 0x1F);
                 PPUSTATUS.V = false;
-                loopy.w = 0;
+                loopy.w.reset();
                 break;
             }
             case 3: {
@@ -169,9 +169,9 @@ void NTSC2C02::writeIO(uint16_t address, uint8_t value) {
         switch (address % 8) {
             case 0: {
                 PPUCTRL = value;
-                uint8_t const& NN = PPUCTRL.NN.to_ulong();
-                loopy.t.nametableX.set(0, (NN >> 0) & 0x01);
-                loopy.t.nametableY.set(0, (NN >> 1) & 0x01);
+                auto NN = PPUCTRL.NN.to_ulong();
+                loopy.t.nametableX = (NN >> 0) & 0x01;
+                loopy.t.nametableY = (NN >> 1) & 0x01;
                 break;
             }
             case 1: {
@@ -192,31 +192,32 @@ void NTSC2C02::writeIO(uint16_t address, uint8_t value) {
                 if (loopy.w.none()) {
                     loopy.t.coarseX = value >> 3;
                     loopy.fineX = value & 0x07;
+                    loopy.w.set();
                 } else {
                     loopy.t.coarseY = value >> 3;
                     loopy.t.fineY = value & 0x07;
+                    loopy.w.reset();
                 }
-                loopy.w.flip();
                 break;
             }
             case 6: {
                 PPUADDR = value;
+                auto t = static_cast<uint16_t>(loopy.t);
                 if (loopy.w.none()) {
-                    auto t = static_cast<uint16_t>(loopy.t);
                     loopy.t = ((value & 0x3F) << 8) | (t & 0x00FF);
-                    //loopy.t.unused = 0;
+                    loopy.w.set();
                 } else {
-                    auto t = static_cast<uint16_t>(loopy.t);
                     loopy.t = (t & 0xFF00) | value;
                     loopy.v = loopy.t;
+                    loopy.w.reset();
                 }
-                loopy.w.flip();
                 break;
             }
             case 7: {
-                writePPUMemory(static_cast<uint16_t>(loopy.v), value);
+                auto v = static_cast<uint16_t>(loopy.v);
+                writePPUMemory(v, value);
                 PPUDATA = value;
-                loopy.v = static_cast<uint16_t>(loopy.v) + (PPUCTRL.I ? 32 : 1);
+                loopy.v = v + (PPUCTRL.I ? 32 : 1);
                 break;
             }
         }

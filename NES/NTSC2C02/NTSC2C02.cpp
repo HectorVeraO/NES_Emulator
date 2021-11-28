@@ -7,7 +7,7 @@
 NTSC2C02::NTSC2C02() {
     PPUCTRL = 0x00;
     PPUMASK = 0x00;
-    PPUSTATUS = 0xA0;
+    PPUSTATUS = 0x00;
     OAMADDR = 0x00;
     loopy.w.reset();
     PPUSCROLL = 0x00;
@@ -36,6 +36,7 @@ NTSC2C02::~NTSC2C02() = default;
 void NTSC2C02::reset() {
     PPUCTRL = 0x00;
     PPUMASK = 0x00;
+    PPUSTATUS = 0x00;
     loopy.w.reset();
     PPUSCROLL = 0x00;
     PPUADDR = 0x00;
@@ -180,8 +181,15 @@ void NTSC2C02::clock() {
         // Idle
     }
 
-    PPUSTATUS.V = currentScanline == 241 && currentCycle == 1;
-    nmi = PPUSTATUS.V && PPUCTRL.V;
+
+    if (currentScanline >= 241 && currentScanline < 261) {
+        if (currentScanline == 241 && currentCycle == 1) {
+            PPUSTATUS.V = true;
+            if (PPUCTRL.V) {
+                nmi = true;
+            }
+        }
+    }
 
     uint8_t bgPixel = 0x00;
     uint8_t bgPalette = 0x00;

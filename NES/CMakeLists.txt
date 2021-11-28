@@ -28,7 +28,8 @@ set(NES_LIB_SOURCE_FILES
         MOS6502/interrupts.cpp
         MOS6502/operations.cpp
         NTSC2C02/NTSC2C02.cpp
-        NTSC2C02/memory.cpp)
+        NTSC2C02/memory.cpp
+        NTSC2C02/debugging.cpp)
 
 
 include_directories(bus)

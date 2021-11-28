@@ -14,6 +14,7 @@
 #include <cmath>
 #include <optional>
 #include <memory>
+#include <set>
 #include "spdlog/spdlog.h"
 #include "Bus.h"
 
@@ -90,6 +91,10 @@ private:
     uint64_t totalCyclesPerformed{};
 
     AddressingMode addressingMode;
+    std::string opAlias;
+    std::set<std::string> fetchingInstructions { "ADC", "AND", "ASL", "BIT", "CMP", "CPX", "CPY", "DEC", "EOR", "INC", "LDA", "LDX", "LDY", "LSR", "ORA", "ROL", "ROR", "SBC" };
+
+    bool requiresFetch() const;
 
     [[nodiscard]] uint8_t readMemory(uint16_t address) const;
     void writeMemory(uint16_t address, uint8_t value) const;

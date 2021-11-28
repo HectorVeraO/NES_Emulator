@@ -25,6 +25,10 @@ public:
     void writePPUMemory(uint16_t address, uint8_t value);
     [[nodiscard]] uint8_t readIO(uint16_t address);
     void writeIO(uint16_t address, uint8_t value);
+
+    // debugging.cpp
+    std::vector<uint32_t> getNametable(uint8_t const& id) const;
+
 private:
     Canvas* canvas{ nullptr };
     std::shared_ptr<Cartridge> cartridge{ nullptr };

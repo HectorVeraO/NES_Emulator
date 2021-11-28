@@ -6,6 +6,7 @@
 
 void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler addressingModeHandler, VoidHandler operationHandler, uint8_t baseCycles, bool canCrossPageBoundary, bool canBranch) {
     uint16_t previousPC = PC - 1;
+    opAlias = operationAlias;
     (this->*addressingModeHandler)();
 
     logForNESTest(operationAlias, previousPC);

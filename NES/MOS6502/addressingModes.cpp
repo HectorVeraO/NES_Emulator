@@ -19,14 +19,14 @@ void MOS6502::amACC() {
 void MOS6502::amIMM() {
     addressingMode = AddressingMode::Immediate;
     opaddress = PC;
-    opvalue = readMemory(PC++);
+    opvalue = requiresFetch() ? readMemory(PC++) : 0x00;
 }
 
 void MOS6502::amZP() {
     addressingMode = AddressingMode::ZeroPage;
     uint8_t lowByte = readMemory(PC++);
     opaddress = 0x0000 | lowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 void MOS6502::amABS() {
@@ -34,7 +34,7 @@ void MOS6502::amABS() {
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = highByte | lowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 void MOS6502::amREL() {
@@ -59,21 +59,21 @@ void MOS6502::amIND() {
     uint8_t effectiveAddressHighByte = readMemory((operandHighByte << 8) | ((operandLowByte + 1) & 0x00FF));
 #endif
     opaddress = (effectiveAddressHighByte << 8) | effectiveAddressLowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 void MOS6502::amZPX() {
     addressingMode = AddressingMode::ZeroPageX;
     uint8_t lowByte = readMemory(PC++) + X;
     opaddress = 0x0000 | lowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 void MOS6502::amZPY() {
     addressingMode = AddressingMode::ZeroPageY;
     uint8_t lowByte = readMemory(PC++) + Y;
     opaddress = 0x0000 | lowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 void MOS6502::amABSX() {
@@ -81,7 +81,7 @@ void MOS6502::amABSX() {
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + X;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
     crossedPageBoundary = highByte != (opaddress & 0xFF00);
 }
 
@@ -90,7 +90,7 @@ void MOS6502::amABSY() {
     uint16_t lowByte = readMemory(PC++);
     uint16_t highByte = readMemory(PC++) << 8;
     opaddress = (highByte | lowByte) + Y;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
     crossedPageBoundary = highByte != (opaddress & 0xFF00);
 }
 
@@ -101,7 +101,7 @@ void MOS6502::amINDX() {
     uint8_t effectiveAddressLowByte = readMemory(0x0000 | sum);
     uint8_t effectiveAddressHighByte = readMemory((sum + 1) & 0x00FF);
     opaddress = (effectiveAddressHighByte << 8) | effectiveAddressLowByte;
-    opvalue = readMemory(opaddress);
+    opvalue =  requiresFetch() ? readMemory(opaddress) : 0x00;
 }
 
 // This one was tricky but the documentation from MOS is awesome, http://archive.6502.org/datasheets/mos_6501-6505_mpu_preliminary_aug_1975.pdf
@@ -113,6 +113,6 @@ void MOS6502::amINDY() {
     uint8_t effectiveAddressLowByte = sum & 0x00FF;
     uint8_t effectiveAddressHighByte = readMemory(0x00FF & (operand + 1)) + hasCarry;
     opaddress = (effectiveAddressHighByte << 8) | effectiveAddressLowByte;
-    opvalue = readMemory(opaddress);
+    opvalue = requiresFetch() ? readMemory(opaddress) : 0x00;
     crossedPageBoundary = hasCarry;
 }
