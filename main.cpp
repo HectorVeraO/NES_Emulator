@@ -1,25 +1,29 @@
-#include <MOS6502.h>
-#include <NesBus.h>
-#include <filesystem>
+#include "MOS6502.h"
+#include "NesBus.h"
 
-int main() {
-    std::cout << std::filesystem::current_path() << "\n";
-    std::ofstream logger("log-test.log");
+void runNesDemo() {
+    auto console = spdlog::stdout_color_st("mos6502");
+//    auto console = spdlog::basic_logger_mt("mos6502", "wdnes.log");
+    spdlog::set_pattern("[%n] [%l] %v");
+    spdlog::set_pattern("%v");
 
-    std::array<std::string, 5> text = {
-            "Hello this is log 1",
-            "Hello this is log 2",
-            "Hello this is log 3",
-            "Hello this is log 4",
-            "Hello this is log 5"
-    };
+    NesBus nes;
 
-    if (logger.is_open()) {
-        for (const auto &item : text) {
-            logger << item << '\n';
-        }
-        logger.close();
-    }
+    auto cartridge = std::make_shared<Cartridge>(R"(C:\Users\junds\Desktop\NES\ROM\nestest.nes)");
+    nes.loadCartridge(cartridge);
+    nes.reset();
+    nes.powerUp();
+}
+
+int main(int argv, char** args) {
+    for (int i = 0; i < argv; ++i)
+        std::cout << args[i] << std::endl;
+
+//    auto console = spdlog::stdout_color_st("mos6502");
+//    spdlog::set_pattern("[%n] [%l] %v");
+//    spdlog::set_pattern("%v");
+
+    runNesDemo();
 
     return 0;
 }
