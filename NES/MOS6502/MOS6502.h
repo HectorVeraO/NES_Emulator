@@ -20,6 +20,30 @@
 
 class MOS6502 {
 public:
+    struct InstructionOperand {
+        enum class Size : uint8_t { Implicit = 0, One = 1, Two = 2 };
+
+        uint8_t lsb;
+        uint8_t msb;
+        Size size;
+    };
+
+    struct State {
+        uint8_t A;
+        uint8_t X;
+        uint8_t Y;
+        uint8_t S;
+        uint8_t P;
+
+        uint16_t PC;
+        uint64_t totalCycles;
+
+        uint8_t opcode;
+        std::string instructionName;
+        InstructionOperand operand;
+
+    };
+
     enum Flag {
         Carry = 0,
         Zero = 1,
@@ -35,23 +59,17 @@ public:
     explicit MOS6502(uint16_t const& startingPC);
     ~MOS6502();
 
-    void loop();
     void clock();
+    void step();
     void nmi();
     void connectBus(Bus* newBus);
     void reset();
 
-    [[nodiscard]] inline uint8_t getA() const {
-        return A;
-    }
-
-    inline void setA(uint8_t a) {
-        A = a;
-    }
-
-    [[nodiscard]] uint8_t getFlag(uint8_t offset) const;
+    uint8_t getFlag(uint8_t offset) const;
     void setFlag(uint8_t offset, bool turnOn);
 
+    State getState() const;
+    State getPreInstructionExecutionState() const;
 private:
     using VoidHandler = void (MOS6502::*)();
     enum AddressingMode {
@@ -80,19 +98,22 @@ private:
     uint8_t X;    // Index X
     uint8_t Y;    // Index Y
 
-    bool on{ false };
-    uint8_t opcode{};
-    uint8_t opvalue{};                  // Value obtained through the addressing mode
-    uint16_t opaddress{};               // Address obtained though the addressing mode
-    uint8_t opcycles{};
+    std::string opalias;
+    uint8_t opcode{ 0x00 };
+    uint8_t opcycles{ 0x00 };       // Instruction length
+    uint16_t opaddress{ 0x00 };     // Instruction's effective address
+    uint8_t opvalue{ 0x00 };        // Instruction "true" operand (value stored in the effective address)
     bool crossedPageBoundary{ false };
     bool isBranchTaken{ false };
+    InstructionOperand operand;
+
     VoidHandler irqHandler;             // Interrupt request handler (IRQ handler)
     uint64_t totalCyclesPerformed{};
 
     AddressingMode addressingMode;
-    std::string opAlias;
-    std::set<std::string> fetchingInstructions { "ADC", "AND", "ASL", "BIT", "CMP", "CPX", "CPY", "DEC", "EOR", "INC", "LDA", "LDX", "LDY", "LSR", "ORA", "ROL", "ROR", "SBC" };
+    std::set<std::string> fetchingInstructions{ "ADC", "AND", "ASL", "BIT", "CMP", "CPX", "CPY", "DEC", "EOR", "INC", "LDA", "LDX", "LDY", "LSR", "ORA", "ROL", "ROR", "SBC" };
+
+    State preInstructionExecutionState;
 
     bool requiresFetch() const;
 

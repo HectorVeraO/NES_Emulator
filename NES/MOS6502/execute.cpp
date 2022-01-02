@@ -6,8 +6,21 @@
 
 void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler addressingModeHandler, VoidHandler operationHandler, uint8_t baseCycles, bool canCrossPageBoundary, bool canBranch) {
     uint16_t previousPC = PC - 1;
-    opAlias = operationAlias;
+    opalias = operationAlias;
     (this->*addressingModeHandler)();
+
+    {
+        // Update state before executing instruction
+        preInstructionExecutionState.A = A;
+        preInstructionExecutionState.X = X;
+        preInstructionExecutionState.S = S;
+        preInstructionExecutionState.P = P;
+        preInstructionExecutionState.PC = PC - 1;
+        preInstructionExecutionState.totalCycles = totalCyclesPerformed;
+        preInstructionExecutionState.opcode = opcode;
+        preInstructionExecutionState.operand = {};
+        preInstructionExecutionState.instructionName = operationAlias;
+    }
 
     logForNESTest(operationAlias, previousPC);
 

@@ -7,5 +7,5 @@ include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
 include_directories(NES/bus)
 
 add_executable(WDNES_test_run main.cpp NES/bus/MockBus.h NES/MOS6502/TestMOS6502.cpp main.cpp)
-target_link_libraries(WDNES_test_run NES_lib)
+target_link_libraries(WDNES_test_run NES_LIB)
 target_link_libraries(WDNES_test_run gtest gmock)

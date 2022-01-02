@@ -10,7 +10,6 @@ MOS6502::MOS6502() {
     X = 0x00;
     Y = 0x00;
     opcode = 0x00;
-    on = true;
     irqHandler = &MOS6502::interruptNONE;
     totalCyclesPerformed = 0;
     setFlag(Flag::B, true);
@@ -26,7 +25,6 @@ MOS6502::MOS6502(uint16_t const& startingPC) {
     X = 0x00;
     Y = 0x00;
     opcode = 0x00;
-    on = true;
     irqHandler = &MOS6502::interruptNONE;
     totalCyclesPerformed = 0;
     setFlag(Flag::B, true);
@@ -49,11 +47,10 @@ void MOS6502::clock() {
     }
 }
 
-void MOS6502::loop() {
-    interruptReset();
-    while (totalCyclesPerformed <= 26554) {
-        clock();
-    }
+void MOS6502::step() {
+   do {
+       clock();
+   } while (opcycles > 0);
 }
 
 void MOS6502::nmi() {
@@ -68,8 +65,16 @@ void MOS6502::reset() {
     interruptReset();
 }
 
+MOS6502::State MOS6502::getState() const {
+    return { A, X, Y, S, P, PC, totalCyclesPerformed, opcode, opalias, { 0x00, 0x00, InstructionOperand::Size::Implicit }};
+}
+
+MOS6502::State MOS6502::getPreInstructionExecutionState() const {
+    return preInstructionExecutionState;
+}
+
 bool MOS6502::requiresFetch() const {
-    return fetchingInstructions.contains(opAlias);
+    return fetchingInstructions.contains(opalias);
 }
 
 uint8_t MOS6502::readMemory(uint16_t address) const {
