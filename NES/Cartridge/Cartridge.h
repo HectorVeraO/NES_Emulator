@@ -41,7 +41,7 @@ public:
 private:
     struct INESHeader {
         char system[3];
-        char format[1];
+        uint8_t format[1];
         uint8_t prgRomBankCount;
         uint8_t chrRomBankCount;
         uint8_t romControl1;

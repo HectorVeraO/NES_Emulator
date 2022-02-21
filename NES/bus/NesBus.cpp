@@ -9,7 +9,7 @@ NesBus::NesBus() : platform("WDNES", 256, 240), cpu(), ppu() {
     cpu.connectBus(this);
     ppu.connectPlatform(&platform);
     ram.resize(0x0800);
-    ioRegisters.resize(0x0028);
+    ioRegisters.resize(0x0020);
     expansionROM.resize(0x1FE0);
     sram.resize(0x2000);
     patternTables.resize(0x2000);

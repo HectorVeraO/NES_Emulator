@@ -10,6 +10,9 @@ Cartridge::Cartridge(const std::string& filePath) {
     if (romifs.is_open()) {
         romifs.read(reinterpret_cast<char*>(&header), sizeof header);
 
+        if (header.format[0] != 0x1A)
+            throw std::invalid_argument("Invalid file format, expected INES format.");
+
         if (header.romControl1 & 0x04)  // Skip trainer
             romifs.ignore(512);
 
