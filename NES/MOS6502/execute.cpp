@@ -22,8 +22,6 @@ void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler ad
         preInstructionExecutionState.instructionName = operationAlias;
     }
 
-    logForNESTest(operationAlias, previousPC);
-
     (this->*operationHandler)();
     setFlag(Flag::B, true);
     opcycles = baseCycles + (canCrossPageBoundary && crossedPageBoundary) + (canBranch && isBranchTaken);

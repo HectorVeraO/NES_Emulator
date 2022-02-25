@@ -4,6 +4,9 @@
 
 #pragma once
 
+#ifndef DISABLE_6502_LOGS
+#define DISABLE_6502_LOGS 0
+#endif
 
 #include "MOS6502.h"
 #include "NTSC2C02.h"
@@ -23,6 +26,8 @@ public:
     [[nodiscard]] uint8_t readCPUMemory(uint16_t address) override;
     void writeCPUMemory(uint16_t address, uint8_t value) override;
 private:
+    std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
+
     std::shared_ptr<Cartridge> cartridge;
     Canvas platform;
     MOS6502 cpu;

@@ -4,10 +4,6 @@
 #define DISABLE_6502_BUGS 0
 #endif
 
-#ifndef DISABLE_6502_LOGS
-#define DISABLE_6502_LOGS 0
-#endif
-
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
@@ -15,10 +11,15 @@
 #include <optional>
 #include <memory>
 #include <set>
+#include <map>
 #include "spdlog/spdlog.h"
 #include "Bus.h"
 
 class MOS6502 {
+private:
+    using HookHandler = std::function<void()>;
+    using VoidHandler = void (MOS6502::*)();
+
 public:
     struct InstructionOperand {
         enum class Size : uint8_t { Implicit = 0, One = 1, Two = 2 };
@@ -70,8 +71,13 @@ public:
 
     State getState() const;
     State getPreInstructionExecutionState() const;
+
+    enum class Hook {
+        AfterInstructionExecution,
+    };
+
+    void addHook(Hook hook, HookHandler handler);
 private:
-    using VoidHandler = void (MOS6502::*)();
     enum AddressingMode {
         None = -1,
         Implicit = 0,
@@ -115,6 +121,8 @@ private:
 
     State preInstructionExecutionState;
 
+    std::map<Hook, HookHandler> handlerByHook;
+
     bool requiresFetch() const;
 
     [[nodiscard]] uint8_t readMemory(uint16_t address) const;
@@ -122,18 +130,6 @@ private:
 
     uint8_t pullStack();
     void pushStack(uint8_t value);
-
-    // TODO: Make this better? I might want to log in other formats or not log at all, anyway it's not priority.
-    void logForNESTest(std::string const& operationAlias, uint16_t startingPC, std::optional<uint8_t> maybeFirstOperand = std::nullopt, std::optional<uint8_t> maybeSecondOperand = std::nullopt) {
-        uint8_t ppuX = 0x00;
-        uint8_t ppuY = 0x00;
-        std::string firstOperand = maybeFirstOperand.has_value() ? fmt::format("{:0>2X}", maybeFirstOperand.value()) : "  ";
-        std::string secondOperand = maybeSecondOperand.has_value() ? fmt::format("{:0>2X}", maybeSecondOperand.value()) : "  ";
-        // Logging format at http://www.qmtpro.com/~nes/misc/nestest.log
-#if !(DISABLE_6502_LOGS)
-        logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", startingPC, opcode, firstOperand, secondOperand, operationAlias, opaddress, A, X, Y, P, S, ppuX, ppuY, totalCyclesPerformed);
-#endif
-    }
 
     // execute.cpp
     void decodeOperation();

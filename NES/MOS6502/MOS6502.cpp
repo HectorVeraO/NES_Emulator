@@ -44,6 +44,8 @@ void MOS6502::clock() {
 
         decodeOperation();
         (this->*irqHandler)();
+
+        this->handlerByHook[Hook::AfterInstructionExecution]();
     }
 }
 
@@ -71,6 +73,10 @@ MOS6502::State MOS6502::getState() const {
 
 MOS6502::State MOS6502::getPreInstructionExecutionState() const {
     return preInstructionExecutionState;
+}
+
+void MOS6502::addHook(MOS6502::Hook hook, MOS6502::HookHandler handler) {
+    this->handlerByHook.insert(std::make_pair(hook, handler));
 }
 
 bool MOS6502::requiresFetch() const {
