@@ -34,13 +34,11 @@ void NesBus::reset() {
 void NesBus::powerUp() {
     cpu.addHook(MOS6502::Hook::AfterInstructionExecution, [&]() {
         auto state = cpu.getPreInstructionExecutionState();
-        uint8_t ppuX = 0x00;
-        uint8_t ppuY = 0x00;
         std::string firstOperand = state.operand.size >= MOS6502::InstructionOperand::Size::One ? fmt::format("{:0>2X}", state.operand.msb) : "  ";
         std::string secondOperand = state.operand.size >= MOS6502::InstructionOperand::Size::Two ? fmt::format("{:0>2X}", state.operand.lsb) : "  ";
 
 #if !(DISABLE_6502_LOGS)
-        logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", state.PC, state.opcode, firstOperand, secondOperand, state.instructionName, 0x0000, state.A, state.X, state.Y, state.P, state.S, ppuX, ppuY, totalCyclesPerformed);
+        logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", state.PC, state.opcode, firstOperand, secondOperand, state.instructionName, 0x0000, state.A, state.X, state.Y, state.P, state.S, 0, 0, state.totalCycles);
 #endif
     });
 
