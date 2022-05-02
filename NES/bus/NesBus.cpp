@@ -4,7 +4,7 @@
 
 #include "NesBus.h"
 
-NesBus::NesBus() : platform("WDNES", 256, 240), cpu(), ppu() {
+NesBus::NesBus() : platform("WDNES", 256, 240, &controllerBuffer), cpu(), ppu() {
     cartridge = nullptr;
     cpu.connectBus(this);
     ppu.connectPlatform(&platform);
@@ -15,6 +15,7 @@ NesBus::NesBus() : platform("WDNES", 256, 240), cpu(), ppu() {
     patternTables.resize(0x2000);
     nameTables.resize(0x0F00);
     palettes.resize(0x0020);
+    std::fill(controllerBuffer.begin(), controllerBuffer.end(), 0x00);
 }
 
 NesBus::~NesBus() = default;
@@ -49,6 +50,10 @@ void NesBus::powerUp() {
     }
 }
 
+auto isControllerAddress = [](uint16_t const& address) {
+    return address == 0x4016 || address == 0x4017;
+};
+
 uint8_t NesBus::readCPUMemory(uint16_t address) {
     if (address < 0x2000)
         return ram[address % 0x0800];
@@ -56,8 +61,16 @@ uint8_t NesBus::readCPUMemory(uint16_t address) {
     if (address < 0x4000)
         return ppu.readIO(address);
 
-    if (address < 0x4020)
-        return ioRegisters[address % 0x0020];   // TODO: Link controller state
+    if (address < 0x4020) {
+        auto const& i = address % 0x0020;
+        if (isControllerAddress(address)) {
+            auto controllerState = ioRegisters[i];
+            ioRegisters[i] = (controllerState << 1);
+            return controllerState >> 7;
+        } else {
+            return ioRegisters[i];
+        }
+    }
 
     if (address < 0x6000)
         return expansionROM[address % 0x1FE0];
@@ -75,8 +88,9 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
     else if (address < 0x4000)
         ppu.writeIO(address, value);
 
-    else if (address < 0x4020)
-        ioRegisters[address % 0x0020] = value;  // TODO: Link controller state
+    else if (address < 0x4020) {
+        ioRegisters[address % 0x0020] = isControllerAddress(address) ? controllerBuffer[address % 0x0002] : value;
+    }
 
     else if (address < 0x6000)
         expansionROM[address % 0x1FE0] = value;

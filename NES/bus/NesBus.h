@@ -40,6 +40,7 @@ private:
     std::vector<uint8_t> patternTables{};
     std::vector<uint8_t> nameTables{};
     std::vector<uint8_t> palettes{};
+    std::array<uint8_t, 2> controllerBuffer{};
 
     uint64_t totalCyclesPerformed{ 0 };
 };
