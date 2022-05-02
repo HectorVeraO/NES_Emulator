@@ -2,8 +2,15 @@
 #include "NesBus.h"
 
 void runNesDemo() {
-    auto console = spdlog::stdout_color_st("mos6502");
-//    auto console = spdlog::basic_logger_mt("mos6502", "wdnes.log");
+    auto now = std::chrono::system_clock::now().time_since_epoch().count();
+
+    std::string userHomePath{ std::getenv("USERPROFILE") };
+    auto baseLogDir = userHomePath + + "\\.wdnes\\logs";
+    auto logName = std::to_string(now) + ".log";
+    auto logPath = baseLogDir + "\\" + logName;
+
+    // auto console = spdlog::stdout_color_st("mos6502");
+    auto console = spdlog::basic_logger_mt("mos6502", logPath);
     spdlog::set_pattern("[%n] [%l] %v");
     spdlog::set_pattern("%v");
 
