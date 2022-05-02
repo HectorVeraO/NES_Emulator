@@ -13,9 +13,10 @@ void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler ad
         // Update state before executing instruction
         preInstructionExecutionState.A = A;
         preInstructionExecutionState.X = X;
+        preInstructionExecutionState.Y = Y;
         preInstructionExecutionState.S = S;
         preInstructionExecutionState.P = P;
-        preInstructionExecutionState.PC = PC - 1;
+        preInstructionExecutionState.PC = previousPC;
         preInstructionExecutionState.totalCycles = totalCyclesPerformed;
         preInstructionExecutionState.opcode = opcode;
         preInstructionExecutionState.operand = {};

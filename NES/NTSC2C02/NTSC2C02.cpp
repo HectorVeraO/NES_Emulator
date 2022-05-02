@@ -88,9 +88,11 @@ void NTSC2C02::clock() {
     };
 
     auto transferAddressY = [&]() {
-        loopy.v.fineY = loopy.t.fineY;
-        loopy.v.nametableY = loopy.t.nametableY;
-        loopy.v.coarseY = loopy.t.coarseY;
+        if (PPUMASK.b || PPUMASK.s) {
+            loopy.v.fineY = loopy.t.fineY;
+            loopy.v.nametableY = loopy.t.nametableY;
+            loopy.v.coarseY = loopy.t.coarseY;
+        }
     };
 
     auto loadBackgroundShifters = [&]() {
