@@ -135,7 +135,7 @@ uint8_t NTSC2C02::readIO(uint16_t address) {
                 break;
             }
             case 4: {
-
+                output = oamp[oamAddr];
                 break;
             }
             case 5: {
@@ -182,9 +182,11 @@ void NTSC2C02::writeIO(uint16_t address, uint8_t value) {
                 break;
             }
             case 3: {
+                oamAddr = value;
                 break;
             }
             case 4: {
+                oamp[oamAddr] = value;
                 break;
             }
             case 5: {
