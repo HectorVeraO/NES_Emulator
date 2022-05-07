@@ -14,6 +14,7 @@ public:
     ~NTSC2C02();
 
     bool nmi{ false };
+    uint8_t* oamp = reinterpret_cast<uint8_t*>(oam.data());
 
     void clock();
     void reset();
@@ -41,6 +42,24 @@ private:
     uint8_matrix patternTables{};
     std::array<uint8_t, 32> palettes{};
     std::array<uint32_t, 64> rgbColors{};
+
+    class OamEntry {
+    public:
+        uint8_t y;
+        uint8_t tileId;
+        uint8_t attributes;
+        uint8_t x;
+    };
+    std::array<OamEntry, 64> oam;
+    uint8_t oamAddr{ 0x00 };
+
+    std::array<OamEntry, 8> scanlineSprites;
+    uint8_t spriteCount{ 0 };
+    uint8_t spriteShifterPatternLo[8];
+    uint8_t spriteShifterPatternHi[8];
+
+    bool spriteZeroHitPossible = false;
+    bool spriteZeroBeingRendered = false;
 
     class MemoryMappedRegister {
     public:

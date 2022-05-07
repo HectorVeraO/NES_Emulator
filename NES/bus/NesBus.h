@@ -42,6 +42,15 @@ private:
     std::vector<uint8_t> palettes{};
     std::array<uint8_t, 2> controllerBuffer{};
 
+    class DMA {
+    public:
+        uint8_t page{ 0x00 };
+        uint8_t address{ 0x00 };
+        uint8_t data{ 0x00 };
+        bool transfer{ false };
+        bool dummy{ false };
+    } dma;
+
     uint64_t totalCyclesPerformed{ 0 };
 };
 

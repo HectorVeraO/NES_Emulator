@@ -19,7 +19,7 @@ void Mapper0::handlePRGWrite(uint16_t address, uint8_t value) {
 }
 
 uint16_t Mapper0::mapToCHR(uint16_t address) const {
-    return chrMemoryBankCount == 1 ? address % 0x2000 : address;
+    return chrMemoryBankCount <= 1 ? address % 0x2000 : address;
 }
 
 void Mapper0::handleCHRWrite(uint16_t address, uint8_t value) {

@@ -54,6 +54,10 @@ auto isControllerAddress = [](uint16_t const& address) {
     return address == 0x4016 || address == 0x4017;
 };
 
+auto isDmaAddress = [](uint16_t const& address) {
+    return address == 0x4014;
+};
+
 uint8_t NesBus::readCPUMemory(uint16_t address) {
     if (address < 0x2000)
         return ram[address % 0x0800];
@@ -89,7 +93,13 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
         ppu.writeIO(address, value);
 
     else if (address < 0x4020) {
-        ioRegisters[address % 0x0020] = isControllerAddress(address) ? controllerBuffer[address % 0x0002] : value;
+        if (isDmaAddress(address)) {
+            dma.page = value;
+            dma.address = 0x00;
+            dma.transfer = true;
+        } else {
+            ioRegisters[address % 0x0020] = isControllerAddress(address) ? controllerBuffer[address % 0x0002] : value;
+        }
     }
 
     else if (address < 0x6000)
@@ -104,8 +114,29 @@ void NesBus::writeCPUMemory(uint16_t address, uint8_t value) {
 
 void NesBus::clock() {
     ppu.clock();
-    if (totalCyclesPerformed % 3 == 0)
-        cpu.clock();
+    if (totalCyclesPerformed % 3 == 0) {
+        if (dma.transfer) {
+            if (dma.dummy) {
+                // Wait for clock sync
+                if (totalCyclesPerformed % 2 == 1) {
+                    dma.dummy = false;
+                }
+            } else {
+                if (totalCyclesPerformed % 2 == 0) {
+                    dma.data = readCPUMemory((dma.page << 8) | dma.address);
+                } else {
+                    ppu.oamp[dma.address++] = dma.data;
+                    // Only 256 fetch are performed so once address (uint8_t) reaches zero a wrap around has occurred which means 256 bytes have been read and written
+                    if (dma.address == 0x00) {
+                        dma.transfer = false;
+                        dma.dummy = true;
+                    }
+                }
+            }
+        } else {
+            cpu.clock();
+        }
+    }
 
     if (ppu.nmi) {
         ppu.nmi = false;

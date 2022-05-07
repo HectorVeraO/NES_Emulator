@@ -2,6 +2,7 @@
 // Created by junds on 27-09-2021.
 //
 
+#include <cstring>
 #include "NTSC2C02.h"
 
 NTSC2C02::NTSC2C02() {
@@ -109,6 +110,18 @@ void NTSC2C02::clock() {
             bgShifterAttributeLsb <<= 1;
             bgShifterAttributeMsb <<= 1;
         }
+
+        if (PPUMASK.s && currentCycle >= 1 && currentCycle < 258) {
+            for (int i = 0; i < spriteCount; i++) {
+                auto& sprite = scanlineSprites[i];
+                if (sprite.x > 0) {
+                    sprite.x--;
+                } else {
+                    spriteShifterPatternLo[i] <<= 1;
+                    spriteShifterPatternHi[i] <<= 1;
+                }
+            }
+        }
     };
 
     if (currentScanline >= -1 && currentScanline < 240) {
@@ -118,6 +131,8 @@ void NTSC2C02::clock() {
 
         if (currentScanline == -1 && currentCycle == 1) {
             PPUSTATUS.V = false;
+            PPUSTATUS.S = false;
+            PPUSTATUS.O = false;
         }
 
         if ((currentCycle >= 2 && currentCycle < 258) || (currentCycle >= 321 && currentCycle < 338)) {
@@ -177,6 +192,95 @@ void NTSC2C02::clock() {
         if (currentScanline == -1 && currentCycle >= 280 && currentCycle < 305) {
             transferAddressY();
         }
+
+        // Foreground rendering, this FAR from accurate from the defined timings
+        if (currentCycle == 257 && currentScanline >= 0) {
+            std::memset(scanlineSprites.data(), 0xFF, 8 * sizeof(OamEntry));
+            spriteCount = 0;
+            for (int i = 0; i < 8; i++) {
+                spriteShifterPatternLo[i] = 0;
+                spriteShifterPatternHi[i] = 0;
+            }
+
+            uint8_t nOamEntry = 0;
+            spriteZeroHitPossible = false;
+            while (nOamEntry < 64 && spriteCount < 9) {
+                int16_t diff = static_cast<int16_t>(currentScanline) - static_cast<int16_t>(oam[nOamEntry].y);
+                if (diff >= 0 && diff < (PPUCTRL.H ? 16 : 8)) {
+                    if (spriteCount < 8) {
+                        if (nOamEntry == 0) {
+                            spriteZeroHitPossible = true;
+                        }
+
+                        std::memcpy(&scanlineSprites[spriteCount++], &oam[nOamEntry], sizeof(OamEntry));
+                    }
+                }
+                nOamEntry++;
+            }
+            PPUSTATUS.O = spriteCount > 8;
+        }
+
+        if (currentCycle == 340) {
+            for (int i = 0; i < spriteCount; i++) {
+                auto const& sprite = scanlineSprites[i];
+
+                uint8_t spritePatternBitsLo;
+                uint8_t spritePatternBitsHi;
+                uint16_t spritePatternAddressLo;
+                uint16_t spritePatternAddressHi;
+
+                if (PPUCTRL.H) {
+                    // 8x16 sprite
+                    auto isVerticallyFlipped = sprite.attributes & 0x80;
+                    if (isVerticallyFlipped) {
+                        if ((currentScanline - sprite.y) < 8) {
+                            // Top half
+                            spritePatternAddressLo = ((sprite.tileId & 0x01) << 12) | ((sprite.tileId & 0xFE) << 4) | (7 - (currentScanline - sprite.y) & 0x07);
+                        } else {
+                            // Bottom half
+                            spritePatternAddressLo = ((sprite.tileId & 0x01) << 12) | (((sprite.tileId & 0xFE) + 1) << 4) | (7 - (currentScanline - sprite.y) & 0x07);
+                        }
+                    } else {
+                        if ((currentScanline - sprite.y) < 8) {
+                            // Top half
+                            spritePatternAddressLo = ((sprite.tileId & 0x01) << 12) | ((sprite.tileId & 0xFE) << 4) | ((currentScanline - sprite.y) & 0x07);
+                        } else {
+                            // Bottom half
+                            spritePatternAddressLo = ((sprite.tileId & 0x01) << 12) | (((sprite.tileId & 0xFE) + 1) << 4) | ((currentScanline - sprite.y) & 0x07);
+                        }
+                    }
+                } else {
+                    // 8x8 sprite
+                    auto isVerticallyFlipped = (sprite.attributes & 0x80) > 0;
+                    if (isVerticallyFlipped)  {
+                        spritePatternAddressLo = (PPUCTRL.S << 12) | (sprite.tileId << 4) | (7 - (currentScanline - sprite.y));
+                    } else {
+                        spritePatternAddressLo = (PPUCTRL.S << 12) | (sprite.tileId << 4) | (currentScanline - sprite.y);
+                    }
+                }
+
+                spritePatternAddressHi = spritePatternAddressLo + 8;
+                spritePatternBitsLo = readPPUMemory(spritePatternAddressLo);
+                spritePatternBitsHi = readPPUMemory(spritePatternAddressHi);
+
+                if (sprite.attributes & 0x40) {
+                    // Flip sprite horizontally, taken from https://stackoverflow.com/a/2602885
+                    auto flipByte = [](uint8_t o) {
+                        o = (o & 0xF0) >> 4 | (o & 0x0F) << 4;
+                        o = (o & 0xCC) >> 2 | (o & 0x33) << 2;
+                        o = (o & 0xAA) >> 1 | (o & 0x55) << 1;
+                        return o;
+                    };
+
+                    spritePatternBitsLo = flipByte(spritePatternBitsLo);
+                    spritePatternBitsHi = flipByte(spritePatternBitsHi);
+                }
+
+                spriteShifterPatternLo[i] = spritePatternBitsLo;
+                spriteShifterPatternHi[i] = spritePatternBitsHi;
+            }
+        }
+
     }
 
     if (currentScanline == 240) {
@@ -208,10 +312,73 @@ void NTSC2C02::clock() {
         bgPalette = (paletteMsb << 1) | paletteLsb;
     }
 
+    uint8_t fgPixel = 0x00;
+    uint8_t fgPalette = 0x00;
+    uint8_t fgPriority = 0x00;
+    if (PPUMASK.s) {
+        spriteZeroBeingRendered = false;
+
+        // This assumes the sprites in scanlineSprites are sorted by OAM priority
+        for (int i = 0; i < spriteCount; i++) {
+            auto sprite = scanlineSprites[i];
+            if (sprite.x == 0) {
+                uint8_t fgPixelLo = (spriteShifterPatternLo[i] & 0x80) > 0;
+                uint8_t fgPixelHi = (spriteShifterPatternHi[i] & 0x80) > 0;
+                fgPixel = (fgPixelHi << 1) | fgPixelLo;
+                fgPalette = (sprite.attributes & 0x03) + 0x04;
+                fgPriority = (sprite.attributes & 0x20) == 0;   // Priority against the background
+
+                if (fgPixel != 0) {
+                    auto isSpriteZero = i == 0;
+                    if (isSpriteZero) {
+                        spriteZeroBeingRendered = true;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    uint8_t chosenPixel = 0x00;
+    uint8_t chosenPalette = 0x00;
+    if (bgPixel == 0 && fgPixel == 0) {
+        chosenPixel = 0x00;
+        chosenPalette = 0x00;
+    } else if (bgPixel == 0 && fgPixel > 0) {
+        chosenPixel = fgPixel;
+        chosenPalette = fgPalette;
+    } else if (bgPixel > 0 && fgPixel == 0) {
+        chosenPixel = bgPixel;
+        chosenPalette = bgPalette;
+    } else if (bgPixel > 0 && fgPixel > 0) {
+        if (fgPriority) {
+            chosenPixel = fgPixel;
+            chosenPalette = fgPalette;
+        } else {
+            chosenPixel = bgPixel;
+            chosenPalette = bgPalette;
+        }
+
+        // Sprite Zero hit detection
+        if (spriteZeroHitPossible && spriteZeroBeingRendered) {
+            if (PPUMASK.b & PPUMASK.s) {
+                // Checks if rendering is disabled for the 8 left most pixels
+                if (~(PPUMASK.m | PPUMASK.M)) {
+                    if (currentCycle >= 9 && currentCycle < 258) {
+                        PPUSTATUS.S = true;
+                    }
+                } else {
+                    if (currentCycle >= 1 && currentCycle < 258) {
+                        PPUSTATUS.S = true;
+                    }
+                }
+            }
+        }
+    }
+
     uint16_t xpos = currentCycle - 1;
     uint16_t ypos = currentScanline;
     if (ypos >= 0 && ypos < 240 && xpos >= 0 && xpos < 256) {
-        frameBuffer[(ypos * 256) + xpos] = getPixelColor(bgPixel, bgPalette);
+        frameBuffer[(ypos * 256) + xpos] = getPixelColor(chosenPixel, chosenPalette);
     }
 
     if (xpos == 255 && ypos == 239) {
