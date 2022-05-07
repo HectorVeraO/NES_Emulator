@@ -45,7 +45,10 @@ void MOS6502::clock() {
         decodeOperation();
         (this->*irqHandler)();
 
-        this->handlerByHook[Hook::AfterInstructionExecution]();
+        auto afterInstructionExecutionHandler = this->handlerByHook.find(Hook::AfterInstructionExecution);
+        if (this->handlerByHook.end() != afterInstructionExecutionHandler) {
+            afterInstructionExecutionHandler->second();
+        }
     }
 }
 
