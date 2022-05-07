@@ -33,20 +33,18 @@ void NesBus::reset() {
 }
 
 void NesBus::powerUp() {
-    cpu.addHook(MOS6502::Hook::AfterInstructionExecution, [&]() {
-        auto state = cpu.getPreInstructionExecutionState();
-        std::string firstOperand = state.operand.size >= MOS6502::InstructionOperand::Size::One ? fmt::format("{:0>2X}", state.operand.msb) : "  ";
-        std::string secondOperand = state.operand.size >= MOS6502::InstructionOperand::Size::Two ? fmt::format("{:0>2X}", state.operand.lsb) : "  ";
-
-#if !(DISABLE_6502_LOGS)
-        logger->info("{:0>4X}  {:0>2X} {} {}  {} ${: <27X} A:{:0>2X} X:{:0>2X} Y:{:0>2X} P:{:0>2X} SP:{:0>2X} PPU:{: >3},{: >3} CYC:{}", state.PC, state.opcode, firstOperand, secondOperand, state.instructionName, 0x0000, state.A, state.X, state.Y, state.P, state.S, 0, 0, state.totalCycles);
-#endif
-    });
-
     bool quit = false;
+    std::chrono::steady_clock::time_point bgn = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    float const msTimeGap = (1.0 / 30.0) * 1000;    // Chose duration (in milliseconds) of a frame at constant 30 fps
     while (!quit) {
         clock();
-        quit = platform.processInput();
+        end = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(end - bgn).count() >= msTimeGap) {
+            quit = platform.processInput();
+            bgn = end;
+        }
     }
 }
 
