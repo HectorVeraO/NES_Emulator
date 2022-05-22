@@ -41,6 +41,18 @@ include_directories(${sdl2_SOURCE_DIR}/include ${sdl2_SOURCE_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS  ON)
 
 add_executable(WDNES main.cpp)
-target_compile_options(WDNES PRIVATE -Wall -Wextra)
+
+# Set default compile flags for GCC
+if(CMAKE_COMPILER_IS_GNUCXX)
+  message(STATUS "GCC detected, adding compile flags")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
+target_compile_options(WDNES PRIVATE)
 target_compile_definitions(NES_LIB PRIVATE DISABLE_6502_BUGS=0 DISABLE_6502_LOGS=1)
+
+# TODO: Find a way to conditionally use this for non MSVC
 target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog mingw32 SDL2main SDL2-static)
+
+# TODO: Find a way to conditionally use this for MSVC
+#target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog SDL2 SDL2main)
