@@ -11,6 +11,7 @@
 #include "MOS6502.h"
 #include "NTSC2C02.h"
 #include "Bus.h"
+#include "spdlog/spdlog.h"
 
 class NesBus : public Bus {
 public:
@@ -26,7 +27,7 @@ public:
     [[nodiscard]] uint8_t readCPUMemory(uint16_t address) override;
     void writeCPUMemory(uint16_t address, uint8_t value) override;
 private:
-    std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
+    // std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
 
     std::shared_ptr<Cartridge> cartridge;
     Canvas platform;

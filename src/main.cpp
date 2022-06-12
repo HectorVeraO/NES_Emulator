@@ -1,5 +1,6 @@
-#include "MOS6502.h"
 #include "NesBus.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 void runNesDemo() {
     auto now = std::chrono::system_clock::now().time_since_epoch().count();
@@ -10,9 +11,9 @@ void runNesDemo() {
     auto logPath = baseLogDir + "\\" + logName;
 
     // auto console = spdlog::stdout_color_st("mos6502");
-    auto console = spdlog::basic_logger_mt("mos6502", logPath);
-    spdlog::set_pattern("[%n] [%l] %v");
-    spdlog::set_pattern("%v");
+    // auto console = spdlog::basic_logger_mt("mos6502", logPath);
+    // spdlog::set_pattern("[%n] [%l] %v");
+    // spdlog::set_pattern("%v");
 
     NesBus nes;
 

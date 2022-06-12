@@ -6,7 +6,7 @@
 
 #include <string>
 #include <array>
-#include "C:\repos\WDNES\cmake-build-debug\_deps\sdl2-src\include\SDL.h"
+#include "SDL.h"
 
 class Canvas {
 public:

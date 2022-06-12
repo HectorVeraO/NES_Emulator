@@ -1,5 +1,5 @@
 project(WDNES_test)
-add_subdirectory(lib)
+add_subdirectory(../_Test/lib)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${gmock_SOURCE_DIR}/include ${gmock_SOURCE_DIR})
 include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})

@@ -1,58 +1,55 @@
-cmake_minimum_required(VERSION 3.20)
-project(WDNES
-        VERSION 1.0
+cmake_minimum_required(VERSION 3.11...3.23)
+
+
+project(
+        WDNES
+        VERSION 0.0.1
         DESCRIPTION "NES emulator"
-        LANGUAGES CXX)
-
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E environment
+        LANGUAGES CXX
 )
 
-include_directories(NES/bus)
-include_directories(NES/Cartridge)
-include_directories(NES/Mapper)
-include_directories(NES/MOS6502)
-include_directories(NES/NTSC2C02)
-include_directories(Platform/Canvas)
 
-add_subdirectory(NES)
-add_subdirectory(Test)
-add_subdirectory(Platform)
+#if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_EXTENSIONS OFF)
+    set(CMAKE_VERBOSE_MAKEFILE OFF)
+    #set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+    set_property(GLOBAL PROPERTY USE_FOLDERS OFF)
+#endif()
+
 
 include(FetchContent)
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-)
+
+if(${CMAKE_VERSION} VERSION_LESS 3.14)
+    include(cmake/add_FetchContent_MakeAvailable.cmake)
+endif()
+
+
 FetchContent_Declare(
         sdl2
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG release-2.0.16
+        GIT_TAG 25f9ed8
 )
-FetchContent_MakeAvailable(spdlog sdl2)
-include_directories(${spdlog_SOURCE_DIR}/include ${spdlog_SOURCE_DIR})
-include_directories(${sdl2_SOURCE_DIR}/include ${sdl2_SOURCE_DIR})
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG 76fb40d
+)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS  ON)
+FetchContent_MakeAvailable(sdl2 spdlog)
 
-add_executable(WDNES main.cpp)
+set(dummy "This is a dummy string")
+message("Main CMakeLists ${dummy}")
 
-# Set default compile flags for GCC
-if(CMAKE_COMPILER_IS_GNUCXX)
-  message(STATUS "GCC detected, adding compile flags")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-endif(CMAKE_COMPILER_IS_GNUCXX)
+# Compiled library code
+add_subdirectory(src)
 
-target_compile_options(WDNES PRIVATE)
-target_compile_definitions(NES_LIB PRIVATE DISABLE_6502_BUGS=0 DISABLE_6502_LOGS=1)
+# Executable code
+#add_subdirectory(apps)
 
-# TODO: Find a way to conditionally use this for non MSVC
-target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog mingw32 SDL2main SDL2-static)
 
-# TODO: Find a way to conditionally use this for MSVC
-#target_link_libraries(WDNES PRIVATE NES_LIB PLATFORM_LIB spdlog SDL2 SDL2main)
+# Testing onlye available if this is the main app
+if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME OR MODERN_CMAKE_BUILD_TESTING) AND BUILD_TESTING)
+    #add_subdirectory(tests)
+endif()
