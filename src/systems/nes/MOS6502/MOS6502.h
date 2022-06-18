@@ -12,6 +12,7 @@
 #include <memory>
 #include <set>
 #include <map>
+#include <functional>
 #include "spdlog/spdlog.h"
 #include "Bus.h"
 
@@ -95,7 +96,7 @@ private:
         IndirectIndexed = 12
     };
     Bus* bus;
-    // std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
+    std::shared_ptr<spdlog::logger> logger = spdlog::get("mos6502");
 
     uint16_t PC;  // Program counter
     uint8_t S;    // Stack pointer

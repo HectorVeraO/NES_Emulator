@@ -2,7 +2,6 @@
 // Created by junds on 27-09-2021.
 //
 
-#include <cstring>
 #include "NTSC2C02.h"
 
 NTSC2C02::NTSC2C02() {

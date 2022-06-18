@@ -3,7 +3,6 @@
 //
 
 #include "RawBus.h"
-#include <utility>
 
 RawBus::RawBus(std::string const& mos6502ROMPath) {
     std::ifstream romifs(mos6502ROMPath, std::ios::ate);

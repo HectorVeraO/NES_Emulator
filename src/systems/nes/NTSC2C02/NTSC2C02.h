@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <bitset>
 #include "Canvas.h"
 #include "Bus.h"

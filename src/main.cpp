@@ -11,9 +11,9 @@ void runNesDemo() {
     auto logPath = baseLogDir + "\\" + logName;
 
     // auto console = spdlog::stdout_color_st("mos6502");
-    // auto console = spdlog::basic_logger_mt("mos6502", logPath);
-    // spdlog::set_pattern("[%n] [%l] %v");
-    // spdlog::set_pattern("%v");
+    auto console = spdlog::basic_logger_mt("mos6502", logPath);
+    spdlog::set_pattern("[%n] [%l] %v");
+    spdlog::set_pattern("%v");
 
     NesBus nes;
 

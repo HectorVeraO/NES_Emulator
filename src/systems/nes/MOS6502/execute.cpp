@@ -29,7 +29,7 @@ void MOS6502::executeOperation(std::string const& operationAlias, VoidHandler ad
 }
 
 void MOS6502::handleUnknownOperation() const {
-    // logger->warn("The opcode {:0>2X} is not recognized, interpreting next byte as opcode", opcode);
+    logger->warn("The opcode {:0>2X} is not recognized, interpreting next byte as opcode", opcode);
 }
 
 void MOS6502::decodeOperation() {
