@@ -2,8 +2,7 @@
 In progress emulation platform for Windows and web browsers.
  
 ## Long term goals
-Have fun while learning.
-Build an emulation platform with some of my favorite consoles (NES, SNES and PS1).
+Have fun while learning and building an emulation platform with some of my favorite consoles (NES, SNES and PS1).
 
 ## Current TODOs
 1. Improve debugging of MOS6502 and 2C02.
